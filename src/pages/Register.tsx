@@ -1,0 +1,150 @@
+import React from "react";
+import {
+  Container,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  Paper,
+} from "@mui/material";
+import { Formik, Form, Field } from "formik";
+import * as Yup from "yup";
+import axios from "axios";
+import { Link } from "react-router-dom";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+
+interface RegisterValues {
+  name: string;
+  email: string;
+  password: string;
+}
+
+const initialValues: RegisterValues = {
+  name: "",
+  email: "",
+  password: "",
+};
+
+const validationSchema = Yup.object({
+  name: Yup.string().required("Required"),
+  email: Yup.string().email("Invalid email").required("Required"),
+  password: Yup.string().min(6, "At least 6 characters").required("Required"),
+});
+
+const Register: React.FC = () => {
+  const handleSubmit = async (values: RegisterValues) => {
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        values
+      );
+      console.log("Register success:", res.data);
+      // TODO: redirect to login or auto-login
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        // ✅ Typed error for Axios
+        console.error(error.response?.data);
+      } else {
+        console.error("Unexpected error", error);
+      }
+    }
+  };
+
+  return (
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
+        <Box textAlign="center">
+          {/* Logo + Text in one line */}
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            mb={1}
+          >
+            <AssignmentIcon color="primary" sx={{ mr: 1 }} />
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: "bold" }}
+              color="primary"
+            >
+              TaskPro
+            </Typography>
+          </Box>
+
+          {/* Subheading */}
+          <Typography variant="h5" gutterBottom fontWeight="bold">
+            Register
+          </Typography>
+        </Box>
+
+        <Formik
+          initialValues={initialValues}
+          validationSchema={validationSchema}
+          onSubmit={handleSubmit}
+        >
+          {({ errors, touched, isSubmitting }) => (
+            <Form>
+              <Box mb={2}>
+                <Field
+                  as={TextField}
+                  name="name"
+                  label="Name"
+                  fullWidth
+                  error={touched.name && Boolean(errors.name)}
+                  helperText={touched.name && errors.name}
+                />
+              </Box>
+              <Box mb={2}>
+                <Field
+                  as={TextField}
+                  name="email"
+                  label="Email"
+                  fullWidth
+                  error={touched.email && Boolean(errors.email)}
+                  helperText={touched.email && errors.email}
+                />
+              </Box>
+              <Box mb={2}>
+                <Field
+                  as={TextField}
+                  name="password"
+                  type="password"
+                  label="Password"
+                  fullWidth
+                  error={touched.password && Boolean(errors.password)}
+                  helperText={touched.password && errors.password}
+                />
+              </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                type="submit"
+                disabled={isSubmitting}
+                fullWidth
+              >
+                Register
+              </Button>
+              {/* Go to Login Link */}
+              <Box textAlign="center" mt={2}>
+                <Typography
+                  variant="body2"
+                  component={Link}
+                  to="/login"
+                  sx={{
+                    textDecoration: "none",
+                    color: "primary.main",
+                    fontWeight: 500,
+                  }}
+                >
+                  Already have an account? Go to Login
+                </Typography>
+              </Box>
+            </Form>
+          )}
+        </Formik>
+      </Paper>
+    </Container>
+  );
+};
+
+export default Register;
