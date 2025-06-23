@@ -17,8 +17,6 @@ import { useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { Link } from "react-router-dom";
 
-// ------------------------------
-// TypeScript types
 interface LoginValues {
   email: string;
   password: string;
@@ -34,8 +32,7 @@ const validationSchema = Yup.object({
   password: Yup.string().min(6, "At least 6 characters").required("Required"),
 });
 
-// ------------------------------
-// Component
+
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -47,13 +44,11 @@ const LoginPage: React.FC = () => {
         values
       );
 
-      // Assuming your backend returns { token, role }
+      
       const { token, role } = res.data;
 
-      // ✅ store in Redux + localStorage via slice action
       dispatch(loginSuccess({ token, role }));
 
-      // ✅ redirect to dashboard or home
       navigate("/dashboard");
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -69,7 +64,6 @@ const LoginPage: React.FC = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Box textAlign="center">
-          {/* Logo + Text in one line */}
           <Box
             display="flex"
             justifyContent="center"
@@ -86,7 +80,6 @@ const LoginPage: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Subheading */}
           <Typography variant="h5" gutterBottom fontWeight="bold">
             Login
           </Typography>

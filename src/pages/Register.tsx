@@ -6,6 +6,10 @@ import {
   Typography,
   Box,
   Paper,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
 } from "@mui/material";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
@@ -14,21 +18,24 @@ import { Link } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 
 interface RegisterValues {
-  name: string;
+  // name: string;
   email: string;
   password: string;
+  role: string; 
 }
 
 const initialValues: RegisterValues = {
-  name: "",
+  // name: "",
   email: "",
   password: "",
+  role: "", 
 };
 
 const validationSchema = Yup.object({
   name: Yup.string().required("Required"),
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string().min(6, "At least 6 characters").required("Required"),
+  role: Yup.string().oneOf(["Admin", "User"], "Select a valid role").required("Role is required"),
 });
 
 const Register: React.FC = () => {
@@ -39,10 +46,9 @@ const Register: React.FC = () => {
         values
       );
       console.log("Register success:", res.data);
-      // TODO: redirect to login or auto-login
+      // redirect to login 
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        // ✅ Typed error for Axios
         console.error(error.response?.data);
       } else {
         console.error("Unexpected error", error);
@@ -54,24 +60,13 @@ const Register: React.FC = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Box textAlign="center">
-          {/* Logo + Text in one line */}
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            mb={1}
-          >
+          <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
             <AssignmentIcon color="primary" sx={{ mr: 1 }} />
-            <Typography
-              variant="h4"
-              sx={{ fontWeight: "bold" }}
-              color="primary"
-            >
+            <Typography variant="h4" sx={{ fontWeight: "bold" }} color="primary">
               TaskPro
             </Typography>
           </Box>
 
-          {/* Subheading */}
           <Typography variant="h5" gutterBottom fontWeight="bold">
             Register
           </Typography>
@@ -82,9 +77,9 @@ const Register: React.FC = () => {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ errors, touched, isSubmitting }) => (
+          {({ errors, touched, isSubmitting, values, setFieldValue }) => (
             <Form>
-              <Box mb={2}>
+              {/* <Box mb={2}>
                 <Field
                   as={TextField}
                   name="name"
@@ -93,7 +88,7 @@ const Register: React.FC = () => {
                   error={touched.name && Boolean(errors.name)}
                   helperText={touched.name && errors.name}
                 />
-              </Box>
+              </Box> */}
               <Box mb={2}>
                 <Field
                   as={TextField}
@@ -115,6 +110,29 @@ const Register: React.FC = () => {
                   helperText={touched.password && errors.password}
                 />
               </Box>
+
+              <Box mb={2}>
+                <FormControl fullWidth>
+                  <InputLabel id="role-label">Role</InputLabel>
+                  <Select
+                    labelId="role-label"
+                    name="role"
+                    label="Role"
+                    value={values.role}
+                    onChange={(e) => setFieldValue("role", e.target.value)}
+                    error={touched.role && Boolean(errors.role)}
+                  >
+                    <MenuItem value="Admin">Admin</MenuItem>
+                    <MenuItem value="User">User</MenuItem>
+                  </Select>
+                  {touched.role && errors.role && (
+                    <Typography variant="caption" color="error">
+                      {errors.role}
+                    </Typography>
+                  )}
+                </FormControl>
+              </Box>
+
               <Button
                 variant="contained"
                 color="primary"
@@ -124,7 +142,7 @@ const Register: React.FC = () => {
               >
                 Register
               </Button>
-              {/* Go to Login Link */}
+
               <Box textAlign="center" mt={2}>
                 <Typography
                   variant="body2"
