@@ -20,6 +20,7 @@
     "axios": "^1.10.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.18.1",
+    "js-cookie": "^3.0.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.58.1",
