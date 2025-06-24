@@ -32,7 +32,6 @@ const validationSchema = Yup.object({
   password: Yup.string().min(6, "At least 6 characters").required("Required"),
 });
 
-
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -43,10 +42,8 @@ const LoginPage: React.FC = () => {
         "http://localhost:5000/api/auth/login",
         values
       );
-
-      
+      console.log("Login response:", res.data);
       const { token, role } = res.data;
-
       dispatch(loginSuccess({ token, role }));
 
       navigate("/dashboard");
@@ -127,7 +124,7 @@ const LoginPage: React.FC = () => {
                 <Typography
                   variant="body2"
                   component={Link}
-                  to="/register"
+                  to="/signup"
                   sx={{
                     textDecoration: "none",
                     color: "primary.main",

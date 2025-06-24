@@ -14,39 +14,40 @@ import {
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 
 interface RegisterValues {
-  // name: string;
   email: string;
   password: string;
-  role: string; 
+  role: "Admin" | "User";
 }
 
 const initialValues: RegisterValues = {
-  // name: "",
   email: "",
   password: "",
-  role: "", 
+  role: "" as "Admin" | "User",
 };
 
 const validationSchema = Yup.object({
-  name: Yup.string().required("Required"),
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string().min(6, "At least 6 characters").required("Required"),
-  role: Yup.string().oneOf(["Admin", "User"], "Select a valid role").required("Role is required"),
+  role: Yup.string()
+    .oneOf(["Admin", "User"], "Select a valid role")
+    .required("Role is required"),
 });
 
 const Register: React.FC = () => {
+  const navigate = useNavigate();
+
   const handleSubmit = async (values: RegisterValues) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
+        "http://localhost:5000/api/auth/signup",
         values
       );
       console.log("Register success:", res.data);
-      // redirect to login 
+      navigate("/login"); 
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error(error.response?.data);
@@ -79,16 +80,6 @@ const Register: React.FC = () => {
         >
           {({ errors, touched, isSubmitting, values, setFieldValue }) => (
             <Form>
-              {/* <Box mb={2}>
-                <Field
-                  as={TextField}
-                  name="name"
-                  label="Name"
-                  fullWidth
-                  error={touched.name && Boolean(errors.name)}
-                  helperText={touched.name && errors.name}
-                />
-              </Box> */}
               <Box mb={2}>
                 <Field
                   as={TextField}
@@ -119,7 +110,9 @@ const Register: React.FC = () => {
                     name="role"
                     label="Role"
                     value={values.role}
-                    onChange={(e) => setFieldValue("role", e.target.value)}
+                    onChange={(e) =>
+                      setFieldValue("role", e.target.value as "Admin" | "User")
+                    }
                     error={touched.role && Boolean(errors.role)}
                   >
                     <MenuItem value="Admin">Admin</MenuItem>

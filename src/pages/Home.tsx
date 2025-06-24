@@ -50,7 +50,7 @@ const Home: React.FC = () => {
               <Button component={RouterLink} to="/login" variant="text">
                 Login
               </Button>
-              <Button component={RouterLink} to="/register" variant="contained">
+              <Button component={RouterLink} to="/signup" variant="contained">
                 Get Started
               </Button>
             </Box>

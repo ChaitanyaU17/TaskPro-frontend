@@ -8,6 +8,11 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import LogoutIcon from '@mui/icons-material/Logout';
+
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import {logout} from '../features/auth/authSlice';
 
 interface Project {
   id: string;
@@ -23,6 +28,9 @@ const Dashboard: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   // mock array
   useEffect(() => {
@@ -49,6 +57,11 @@ const Dashboard: React.FC = () => {
     setNewDescription('');
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  }
+
   const handleDeleteProject = (id: string) => {
     setProjects(projects.filter((p) => p.id !== id));
   };
@@ -57,14 +70,24 @@ const Dashboard: React.FC = () => {
     <Container sx={{ mt: 4 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" fontWeight="bold">Your Projects</Typography>
-        <Button
-          variant="contained"
-          sx={{bgcolor: 'primary.main', color: 'white'}}
-          startIcon={<AddIcon />}
-          onClick={() => setOpen(true)}
-        >
-          New Project
-        </Button>
+        <Box display="flex" gap={2}>
+          <Button
+            variant="contained"
+            sx={{ bgcolor: 'primary.main', color: 'white' }}
+            startIcon={<AddIcon />}
+            onClick={() => setOpen(true)}
+          >
+            New Project
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<LogoutIcon />}
+            onClick={handleLogout}
+          >
+            Logout
+          </Button>
+        </Box>
       </Box>
 
       {/* Loading circle */}
