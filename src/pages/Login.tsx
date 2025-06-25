@@ -16,6 +16,9 @@ import { loginSuccess } from "../features/auth/authSlice";
 import { useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { Link } from "react-router-dom";
+import {toast} from 'react-toastify';
+
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 interface LoginValues {
   email: string;
@@ -39,9 +42,10 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (values: LoginValues) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${baseUrl}/auth/login`,
         values
       );
+      toast.success('Login Successfull');
       console.log("Login response:", res.data);
       const { token, role } = res.data;
       dispatch(loginSuccess({ token, role }));
@@ -50,8 +54,9 @@ const LoginPage: React.FC = () => {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Login failed:", error.response?.data);
-        alert(error.response?.data.message || "Login failed");
+        toast.error(error.response?.data.message || "Login failed");
       } else {
+        toast.error('Something went wrong');
         console.error("Unexpected error:", error);
       }
     }

@@ -16,6 +16,9 @@ import * as Yup from "yup";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import {toast} from 'react-toastify';
+
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 interface RegisterValues {
   email: string;
@@ -43,15 +46,17 @@ const Register: React.FC = () => {
   const handleSubmit = async (values: RegisterValues) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/signup",
+        `${baseUrl}/auth/signup`,
         values
       );
+      toast.success("Registration Successfull");
       console.log("Register success:", res.data);
       navigate("/login"); 
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error(error.response?.data);
+        toast.error(error.response?.data);
       } else {
+        toast.error('Something went wrong');
         console.error("Unexpected error", error);
       }
     }
