@@ -9,16 +9,15 @@ import {
 } from "@mui/material";
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
-import axios from "axios";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../features/store/store";
-import { loginSuccess } from "../features/auth/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { loginThunk } from "../features/auth/authSlice";
+import type { AppDispatch, RootState } from "../features/store/store";
 import { useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { Link } from "react-router-dom";
-import {toast} from 'react-toastify';
+import { toast } from "react-toastify";
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+// const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 interface LoginValues {
   email: string;
@@ -38,27 +37,15 @@ const validationSchema = Yup.object({
 const LoginPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const authState = useSelector((state: RootState) => state.auth);
 
   const handleSubmit = async (values: LoginValues) => {
-    try {
-      const res = await axios.post(
-        `${baseUrl}/auth/login`,
-        values
-      );
-      toast.success('Login Successfull');
-      console.log("Login response:", res.data);
-      const { token, role } = res.data;
-      dispatch(loginSuccess({ token, role }));
-
+    const result = await dispatch(loginThunk(values));
+    if (loginThunk.fulfilled.match(result)) {
       navigate("/dashboard");
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("Login failed:", error.response?.data);
-        toast.error(error.response?.data.message || "Login failed");
-      } else {
-        toast.error('Something went wrong');
-        console.error("Unexpected error:", error);
-      }
+    } else {
+      toast.error("Login failed");
+      console.log(result.payload);
     }
   };
 
@@ -66,12 +53,7 @@ const LoginPage: React.FC = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Box textAlign="center">
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            mb={1}
-          >
+          <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
             <AssignmentIcon color="primary" sx={{ mr: 1 }} />
             <Typography
               variant="h4"
@@ -119,10 +101,10 @@ const LoginPage: React.FC = () => {
                 variant="contained"
                 color="primary"
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || authState.loading}
                 fullWidth
               >
-                {isSubmitting ? "Logging in..." : "Login"}
+                {authState.loading ? "Logging in..." : "Login"}
               </Button>
 
               <Box textAlign="center" mt={2}>
@@ -139,6 +121,14 @@ const LoginPage: React.FC = () => {
                   Don’t have an account? Register here
                 </Typography>
               </Box>
+
+              {authState.error && (
+                <Box mt={2} color="error.main">
+                  <Typography color="error" align="center">
+                    {authState.error}
+                  </Typography>
+                </Box>
+              )}
             </Form>
           )}
         </Formik>

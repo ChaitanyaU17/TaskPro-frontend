@@ -1,0 +1,170 @@
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
+import axios from "axios";
+import type { RootState } from "../store/store";
+import type {AuthState} from '../auth/authSlice';
+
+const baseUrl =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
+interface Task {
+  _id: string;
+  title: string;
+  description?: string;
+  createdAt: string;
+}
+
+interface TaskState {
+  tasks: Task[];
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: TaskState = {
+  tasks: [],
+  loading: false,
+  error: null,
+};
+
+export const fetchTasks = createAsyncThunk(
+  "tasks/fetchTasks",
+  async (_, { getState, rejectWithValue }) => {
+    const token = (getState() as RootState).auth.token;
+    try {
+      const res = await axios.get(`${baseUrl}/task`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue(
+          err.response?.data?.message || "Failed to fetch tasks"
+        );
+      }
+      return rejectWithValue("An unexpected error occurred");
+    }
+  }
+);
+
+export const createTask = createAsyncThunk(
+  "tasks/createTask",
+  async (
+    { title, description }: { title: string; description?: string },
+    { getState, rejectWithValue }
+  ) => {
+    const token = (getState() as RootState).auth.token;
+    try {
+      const res = await axios.post(
+        `${baseUrl}/task`,
+        { title, description },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return res.data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue(
+          err.response?.data?.message || "Failed to create tasks"
+        );
+      }
+      return rejectWithValue("An unexpected error occurred");
+    }
+  }
+);
+
+// Async thunk to update a task
+export const editTask = createAsyncThunk(
+  "task/editTask",
+  async (
+    { id, updates }: { id: string; updates: Partial<Task> },
+    { getState, rejectWithValue }
+  ) => {
+    try {
+      const state = getState() as { auth: AuthState };
+      const token = state.auth.token;
+      const res = await axios.put(`${baseUrl}/task/${id}`, updates, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue(
+          err.response?.data?.message || "Failed to edit tasks"
+        );
+      }
+      return rejectWithValue("An unexpected error occurred");
+    }
+  }
+);
+
+export const deleteTask = createAsyncThunk(
+  "tasks/deleteTask",
+  async (id: string, { getState, rejectWithValue }) => {
+    const token = (getState() as RootState).auth.token;
+    try {
+      await axios.delete(`${baseUrl}/task/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return id;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        return rejectWithValue(
+          err.response?.data?.message || "Failed to delete tasks"
+        );
+      }
+      return rejectWithValue("An unexpected error occurred");
+    }
+  }
+);
+
+const taskSlice = createSlice({
+  name: "tasks",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchTasks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTasks.fulfilled, (state, action: PayloadAction<Task[]>) => {
+        state.tasks = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchTasks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(createTask.fulfilled, (state, action: PayloadAction<Task>) => {
+        state.tasks.unshift(action.payload);
+      })
+
+      .addCase(editTask.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(editTask.fulfilled, (state, action: PayloadAction<Task>) => {
+        state.loading = false;
+        const index = state.tasks.findIndex(
+          (t) => t._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.tasks[index] = action.payload;
+        }
+      })
+      .addCase(editTask.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(deleteTask.fulfilled, (state, action: PayloadAction<string>) => {
+        state.tasks = state.tasks.filter((t) => t._id !== action.payload);
+      });
+  },
+});
+
+export default taskSlice.reducer;
