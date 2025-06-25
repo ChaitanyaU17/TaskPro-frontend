@@ -1,83 +1,157 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Container, Typography, Box, Button,
-  Dialog, DialogTitle, DialogContent, TextField, DialogActions,
-  IconButton, Tooltip, CircularProgress, Table, TableHead, TableRow,
-  TableCell, TableBody, Paper
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import LogoutIcon from '@mui/icons-material/Logout';
+  Container,
+  Typography,
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  IconButton,
+  Tooltip,
+  CircularProgress,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Paper,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
+import LogoutIcon from "@mui/icons-material/Logout";
 
-import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import {logout} from '../features/auth/authSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../features/auth/authSlice";
+import type { RootState } from "../features/store/store";
+import axios from "axios";
+import { toast } from "react-toastify";
 
-interface Project {
-  id: string;
+const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+
+interface Task {
+  _id: string;
   title: string;
   description?: string;
   createdAt: string;
 }
 
 const Dashboard: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [open, setOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDescription, setNewDescription] = useState('');
+  const [openCreate, setOpenCreate] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editTask, setEditTask] = useState<Task | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const token = useSelector((state: RootState) => state.auth.token);
 
-  // mock array
+  // Fetch tasks
   useEffect(() => {
-    setTimeout(() => {
-      setProjects([
-        { id: '1', title: 'Website Redesign', description: 'Revamp landing page.', createdAt: '2025-06-22' },
-        { id: '2', title: 'Mobile App', description: 'Build v2.0 mobile app.', createdAt: '2025-06-22' },
-        { id: '3', title: 'Marketing Campaign', description: 'Launch Q3 ads.', createdAt: '2025-06-22' },
-      ]);
-      setLoading(false);
-    }, 1200);
-  }, []);
-
-  const handleCreateProject = () => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      title: newTitle,
-      description: newDescription,
-      createdAt: new Date().toISOString().split('T')[0],
+    const fetchTasks = async () => {
+      try {
+        const res = await axios.get(`${baseUrl}/task`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTasks(res.data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load tasks");
+      } finally {
+        setLoading(false);
+      }
     };
-    setProjects([...projects, newProject]);
-    setOpen(false);
-    setNewTitle('');
-    setNewDescription('');
+    fetchTasks();
+  }, [token]);
+
+  // Create task
+  const handleCreateTask = async () => {
+    try {
+      const res = await axios.post(
+        `${baseUrl}/task`,
+        { title: newTitle, description: newDescription },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTasks([res.data, ...tasks]);
+      setOpenCreate(false);
+      setNewTitle("");
+      setNewDescription("");
+      toast.success("Task created");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to create task");
+    }
   };
 
+  // Open edit 
+  const handleOpenEdit = (task: Task) => {
+    setEditTask(task);
+    setEditTitle(task.title);
+    setEditDescription(task.description || "");
+    setOpenEdit(true);
+  };
+
+  // Update task
+  const handleUpdateTask = async () => {
+    if (!editTask) return;
+    try {
+      const res = await axios.put(
+        `${baseUrl}/task/${editTask._id}`,
+        { title: editTitle, description: editDescription },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setTasks(tasks.map((t) => (t._id === editTask._id ? res.data : t)));
+      setOpenEdit(false);
+      setEditTask(null);
+      toast.success("Task updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update task");
+    }
+  };
+
+  // Delete task
+  const handleDeleteTask = async (id: string) => {
+    try {
+      await axios.delete(`${baseUrl}/task/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTasks(tasks.filter((t) => t._id !== id));
+      toast.success("Task deleted");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete task");
+    }
+  };
+
+  // Logout
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/login');
-  }
-
-  const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter((p) => p.id !== id));
+    navigate("/login");
   };
 
   return (
     <Container sx={{ mt: 4 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" fontWeight="bold">Your Projects</Typography>
+        <Typography variant="h4" fontWeight="bold">Your Tasks</Typography>
         <Box display="flex" gap={2}>
           <Button
             variant="contained"
-            sx={{ bgcolor: 'primary.main', color: 'white' }}
             startIcon={<AddIcon />}
-            onClick={() => setOpen(true)}
+            onClick={() => setOpenCreate(true)}
           >
-            New Project
+            New Task
           </Button>
           <Button
             variant="outlined"
@@ -90,39 +164,39 @@ const Dashboard: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Loading circle */}
       {loading ? (
         <Box display="flex" justifyContent="center" mt={5}>
-          <CircularProgress color="primary" size={50} />
+          <CircularProgress size={50} />
         </Box>
+      ) : tasks.length === 0 ? (
+        <Typography textAlign="center" mt={5} color="text.secondary">
+          No tasks yet. Create your first task!
+        </Typography>
       ) : (
-        <Paper elevation={3} sx={{ borderRadius: '10px', overflow: 'hidden' }}>
-          <Table sx={{borderRadius: '30px'}}>
-            <TableHead sx={{ bgcolor: 'primary.main' }}>
+        <Paper elevation={3} sx={{ borderRadius: 2 }}>
+          <Table>
+            <TableHead sx={{ bgcolor: "primary.main" }}>
               <TableRow>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Title</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Created At</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">Actions</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>Title</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>Description</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }}>Created At</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: "bold" }} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {projects.map((project) => (
-                <TableRow key={project.id} hover>
-                  <TableCell>{project.title}</TableCell>
-                  <TableCell>{project.description || 'No description'}</TableCell>
-                  <TableCell>{project.createdAt}</TableCell>
+              {tasks.map((task) => (
+                <TableRow key={task._id} hover>
+                  <TableCell>{task.title}</TableCell>
+                  <TableCell>{task.description || "No description"}</TableCell>
+                  <TableCell>{new Date(task.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">
-                      <IconButton size="small">
+                      <IconButton size="small" onClick={() => handleOpenEdit(task)}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteProject(project.id)}
-                      >
+                      <IconButton size="small" onClick={() => handleDeleteTask(task._id)}>
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -134,11 +208,12 @@ const Dashboard: React.FC = () => {
         </Paper>
       )}
 
-      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Create New Project</DialogTitle>
+      {/* Create Task Dialog */}
+      <Dialog open={openCreate} onClose={() => setOpenCreate(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Create New Task</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <TextField
-            label="Project Title"
+            label="Title"
             fullWidth
             margin="normal"
             value={newTitle}
@@ -155,13 +230,46 @@ const Dashboard: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button onClick={() => setOpenCreate(false)}>Cancel</Button>
           <Button
             variant="contained"
-            onClick={handleCreateProject}
+            onClick={handleCreateTask}
             disabled={!newTitle.trim()}
           >
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Edit Task</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <TextField
+            label="Title"
+            fullWidth
+            margin="normal"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+          />
+          <TextField
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            margin="normal"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleUpdateTask}
+            disabled={!editTitle.trim()}
+          >
+            Update
           </Button>
         </DialogActions>
       </Dialog>

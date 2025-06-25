@@ -6,6 +6,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import BoardPage from "./pages/BoardPage";
+  import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/signup" element={<Register />} />
         </Routes>
       </BrowserRouter>
+      <ToastContainer />
     </div>
   );
 }

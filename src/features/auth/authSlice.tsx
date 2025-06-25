@@ -7,7 +7,7 @@ interface AuthState {
   role: 'Admin' | 'User' | null;
 }
 
-// ✅ Read from cookies instead of localStorage:
+// Read from cookies instead of localStorage:
 const initialState: AuthState = {
   token: Cookies.get('token') || null,
   role: (Cookies.get('role') as 'Admin' | 'User' | null) || null,
@@ -24,7 +24,7 @@ const authSlice = createSlice({
       state.token = action.payload.token;
       state.role = action.payload.role;
 
-      // ✅ Store in cookies:
+      //  Store in cookies:
       Cookies.set('token', action.payload.token, { expires: 1 }); // expires in 1 day
       Cookies.set('role', action.payload.role, { expires: 1 });
     },
