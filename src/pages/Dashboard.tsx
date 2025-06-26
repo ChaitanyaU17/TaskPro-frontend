@@ -9,99 +9,44 @@ import {
   DialogContent,
   TextField,
   DialogActions,
-  IconButton,
-  Tooltip,
   CircularProgress,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
   Paper,
 } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddIcon from "@mui/icons-material/Add";
-import LogoutIcon from "@mui/icons-material/Logout";
+import { fetchProjects, createProject } from "../features/auth/projectSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../features/auth/authSlice";
 import type { RootState, AppDispatch } from "../features/store/store";
-import {
-  fetchTasks,
-  createTask,
-  deleteTask,
-  editTask,
-} from "../features/auth/taskSlice";
-
 import { toast } from "react-toastify";
 
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { tasks, loading, error } = useSelector(
-    (state: RootState) => state.task
+
+  const { projects, loading, error } = useSelector(
+    (state: RootState) => state.project
   );
+  const { token, role } = useSelector((state: RootState) => state.auth);
 
   const [open, setOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newDescription, setNewDescription] = useState("");
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [editProject, setEditProject] = useState<any | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   useEffect(() => {
-    dispatch(fetchTasks());
+    dispatch(fetchProjects());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (error) toast.error(error);
-  }, [error]);
-
   const handleCreateProject = async () => {
-    if (!newTitle.trim()) return;
-    await dispatch(
-      createTask({ title: newTitle, description: newDescription })
-    );
-    setOpen(false);
-    setNewTitle("");
-    setNewDescription("");
-  };
-
-  const handleOpenEdit = (task: any) => {
-    setEditProject(task);
-    setEditTitle(task.title);
-    setEditDescription(task.description || "");
-    setEditOpen(true);
-  };
-
-  const handleUpdateProject = async () => {
-    if (!editProject) return;
-
+    if (!name.trim()) return;
     try {
-      await dispatch(
-        editTask({
-          id: editProject._id,
-          updates: {
-            title: editTitle,
-            description: editDescription,
-          },
-        })
-      );
-      setEditOpen(false);
-      setEditProject(null);
-      setEditTitle("");
-      setEditDescription("");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to update task");
+      await dispatch(createProject({ name, description })).unwrap();
+      setOpen(false);
+      setName("");
+      setDescription("");
+      toast.success("Project created successfully");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create project");
     }
-  };
-
-  const handleDeleteProject = async (id: string) => {
-    await dispatch(deleteTask(id));
   };
 
   const handleLogout = () => {
@@ -111,29 +56,17 @@ const Dashboard: React.FC = () => {
 
   return (
     <Container sx={{ mt: 4 }}>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-      >
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" fontWeight="bold">
-          Your Tasks
+          Your Projects
         </Typography>
         <Box display="flex" gap={2}>
-          <Button
-            variant="contained"
-            onClick={() => setOpen(true)}
-            startIcon={<AddIcon />}
-          >
-            New Task
-          </Button>
-          <Button
-            variant="outlined"
-            color="error"
-            onClick={handleLogout}
-            startIcon={<LogoutIcon />}
-          >
+          {role === "Admin" && (
+            <Button variant="contained" onClick={() => setOpen(true)}>
+              New Project
+            </Button>
+          )}
+          <Button variant="outlined" color="error" onClick={handleLogout}>
             Logout
           </Button>
         </Box>
@@ -141,86 +74,46 @@ const Dashboard: React.FC = () => {
 
       {loading ? (
         <Box display="flex" justifyContent="center" mt={5}>
-          <CircularProgress color="primary" size={50} />
+          <CircularProgress />
         </Box>
-      ) : tasks.length === 0 ? (
-        <Box textAlign="center" mt={5}>
-          <Typography variant="h6" color="text.secondary">
-            No tasks yet. Create your first task!
-          </Typography>
-        </Box>
+      ) : projects.length === 0 ? (
+        <Typography>No projects found.</Typography>
       ) : (
-        <Paper elevation={3} sx={{ borderRadius: "10px", overflow: "hidden" }}>
-          <Table>
-            <TableHead sx={{ bgcolor: "primary.main" }}>
-              <TableRow>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Title
-                </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Description
-                </TableCell>
-                <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                  Created At
-                </TableCell>
-                <TableCell
-                  sx={{ color: "white", fontWeight: "bold" }}
-                  align="right"
-                >
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task._id} hover>
-                  <TableCell>{task.title}</TableCell>
-                  <TableCell>{task.description || "No description"}</TableCell>
-                  <TableCell>
-                    {new Date(task.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Edit">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenEdit(task)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Delete">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteProject(task._id)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <Paper sx={{ p: 2, bgcolor: '#c4c9cc' }}>
+          {projects.map((project) => (
+            <Box
+              key={project._id}
+              sx={{
+                p: 2,
+                mb: 1,
+                border: "1px solid #ddd",
+                borderRadius: 2,
+                bgcolor: "grey.100",
+                cursor: "pointer",
+                "&:hover": { backgroundColor: "#c4c9cc" },
+              }}
+              onClick={() => navigate(`/projects/${project._id}`)}
+            >
+              <Typography variant="h6" fontWeight="bold">
+                {project.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {project.description || "No description"}
+              </Typography>
+            </Box>
+          ))}
         </Paper>
       )}
 
-      {/* create task */}
-
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Create New Task</DialogTitle>
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Create New Project</DialogTitle>
         <DialogContent>
           <TextField
-            label="Task Title"
+            label="Project Name"
             fullWidth
             margin="normal"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
           <TextField
             label="Description"
@@ -228,56 +121,14 @@ const Dashboard: React.FC = () => {
             margin="normal"
             multiline
             rows={3}
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCreateProject}
-            disabled={!newTitle.trim()}
-          >
+          <Button variant="contained" onClick={handleCreateProject} disabled={!name.trim()}>
             Create
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* update dialog */}
-      <Dialog
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Edit Task</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="Task Title"
-            fullWidth
-            margin="normal"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-          />
-          <TextField
-            label="Description"
-            fullWidth
-            margin="normal"
-            multiline
-            rows={3}
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleUpdateProject}
-            disabled={!editTitle.trim()}
-          >
-            Update
           </Button>
         </DialogActions>
       </Dialog>

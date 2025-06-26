@@ -56,7 +56,7 @@ const Footer: React.FC = () => {
             Apps
           </Typography>
           <Typography variant="body2" width={300}>
-            Download the Trello App for your Desktop or Mobile devices.
+            Download the TaskPro App for your Desktop or Mobile devices.
           </Typography>
         </Grid>
 
