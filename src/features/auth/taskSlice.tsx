@@ -13,6 +13,8 @@ export interface Task {
   description?: string;
   status: "To Do" | "In Progress" | "Done";
   project: string;
+  assigneeEmail?: string;
+  comments?: { text: string }[];
   createdAt: string;
 }
 
@@ -29,7 +31,7 @@ const initialState: TaskState = {
 };
 
 export const fetchTasks = createAsyncThunk(
-  "tasks/fetchTasks",
+  "task/fetchTasks",
   async (projectId: string, { getState, rejectWithValue }) => {
     const token = (getState() as RootState).auth.token;
     try {
@@ -50,7 +52,7 @@ export const fetchTasks = createAsyncThunk(
 
 // create task
 export const createTask = createAsyncThunk(
-  "tasks/createTask",
+  "task/createTask",
   async (
     {
       title,
@@ -109,7 +111,7 @@ export const editTask = createAsyncThunk(
 );
 
 export const deleteTask = createAsyncThunk(
-  "tasks/deleteTask",
+  "task/deleteTask",
   async (id: string, { getState, rejectWithValue }) => {
     const token = (getState() as RootState).auth.token;
     try {
@@ -128,18 +130,71 @@ export const deleteTask = createAsyncThunk(
   }
 );
 
+// fetch comments
+export const fetchComments = createAsyncThunk(
+  "task/fetchComments",
+  async (taskId: string, { getState, rejectWithValue }) => {
+    const token = (getState() as RootState).auth.token;
+    try {
+      const res = await axios.get(`${baseUrl}/comments/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { taskId, comments: res.data };
+    } catch (err) {
+      return rejectWithValue("Failed to fetch comments");
+    }
+  }
+);
+
+// add comment
+export const addComment = createAsyncThunk(
+  "comments/addComment",
+  async (
+    { taskId, text }: { taskId: string; text: string },
+    { getState, rejectWithValue }
+  ) => {
+    const token = (getState() as RootState).auth.token;
+    try {
+      const res = await axios.post(
+        `${baseUrl}/comments/${taskId}`,
+        { text },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to add comment"
+      );
+    }
+  }
+);
+
 const taskSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
-  moveTaskStatus: (
-    state,
-    action: PayloadAction<{ id: string; newStatus: Task["status"] }>
-  ) => {
-    const task = state.tasks.find((t) => t._id === action.payload.id);
-    if (task) task.status = action.payload.newStatus;
+    moveTaskStatus: (
+      state,
+      action: PayloadAction<{ id: string; newStatus: Task["status"] }>
+    ) => {
+      const task = state.tasks.find((t) => t._id === action.payload.id);
+      if (task) task.status = action.payload.newStatus;
+    },
+    updateTaskComments: (
+      state,
+      action: PayloadAction<{ taskId: string; comment: { text: string } }>
+    ) => {
+      const task = state.tasks.find((t) => t._id === action.payload.taskId);
+      if (task) {
+        if (!task.comments) task.comments = [];
+        task.comments.push(action.payload.comment);
+      }
+    },
   },
-},
   extraReducers: (builder) => {
     builder
       .addCase(fetchTasks.pending, (state) => {
@@ -183,6 +238,6 @@ const taskSlice = createSlice({
   },
 });
 
-export const { moveTaskStatus } = taskSlice.actions;
+export const { moveTaskStatus, updateTaskComments } = taskSlice.actions;
 
 export default taskSlice.reducer;

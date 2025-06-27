@@ -12,10 +12,10 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import { useDispatch, useSelector } from "react-redux";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { AppDispatch, RootState } from "../features/store/store";
@@ -25,8 +25,10 @@ import {
   createTask,
   deleteTask,
   moveTaskStatus,
+  addComment,
 } from "../features/auth/taskSlice";
 import type { Task } from "../features/auth/taskSlice";
+import { updateTaskComments } from "../features/auth/taskSlice";
 
 const statuses: Task["status"][] = ["To Do", "In Progress", "Done"];
 
@@ -45,6 +47,37 @@ const BoardPage: React.FC = () => {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState<Task["status"]>("To Do");
+
+  // new state
+  const [commentModalTask, setCommentModalTask] = useState<Task | null>(null);
+  const [newComment, setNewComment] = useState("");
+
+  const handleAddComment = async () => {
+    if (commentModalTask && newComment.trim()) {
+      const result = await dispatch(
+        addComment({ taskId: commentModalTask._id, text: newComment })
+      );
+
+      if (addComment.fulfilled.match(result)) {
+        const newCmt = result.payload;
+
+        setCommentModalTask((prev) =>
+          prev
+            ? {
+                ...prev,
+                comments: [...(prev.comments || []), newCmt],
+              }
+            : null
+        );
+
+        dispatch(
+          updateTaskComments({ taskId: commentModalTask._id, comment: newCmt })
+        );
+
+        setNewComment("");
+      }
+    }
+  };
 
   useEffect(() => {
     if (projectId) dispatch(fetchTasks(projectId));
@@ -138,7 +171,12 @@ const BoardPage: React.FC = () => {
                   <Paper
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    sx={{ flex: 1, p: 2, minHeight: "400px", bgcolor: "grey.100" }}
+                    sx={{
+                      flex: 1,
+                      p: 2,
+                      minHeight: "400px",
+                      bgcolor: "grey.100",
+                    }}
                   >
                     <Typography variant="h6" fontWeight="bold" mb={2}>
                       {status}
@@ -164,49 +202,103 @@ const BoardPage: React.FC = () => {
                               position: "relative",
                             }}
                           >
-                            <Box
-                              display="flex"
-                              justifyContent="space-between"
-                              alignItems="center"
-                            >
-                              <Typography
-                                fontWeight="bold"
-                                sx={{ flexGrow: 1 }}
-                              >
+                            <Box display="flex" justifyContent="space-between">
+                              <Typography fontWeight="bold">
                                 {task.title}
                               </Typography>
                               <Box display="flex" gap={1}>
-                                <IconButton
+                                <Button
+                                  size="small"
                                   onClick={() => openTaskModal(task)}
                                   sx={{
-                                    bgcolor: "transparent",
-                                    "&:hover": {
-                                      bgcolor: "primary.light",
-                                    },
+                                    minWidth: "unset",
+                                    padding: "6px",
+                                    "&:hover": { bgcolor: "#e0f7fa" },
                                   }}
                                 >
                                   <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton
+                                </Button>
+                                <Button
+                                  size="small"
+                                  color="error"
                                   onClick={() => dispatch(deleteTask(task._id))}
                                   sx={{
-                                    bgcolor: "transparent",
-                                    "&:hover": {
-                                      bgcolor: "error.light",
-                                    },
+                                    minWidth: "unset",
+                                    padding: "6px",
+                                    "&:hover": { bgcolor: "#ffebee" },
                                   }}
                                 >
                                   <DeleteIcon fontSize="small" />
-                                </IconButton>
+                                </Button>
+                                <Button
+                                  size="small"
+                                  onClick={() =>
+                                    setCommentModalTask(
+                                      commentModalTask?._id === task._id
+                                        ? null
+                                        : task
+                                    )
+                                  }
+                                  sx={{
+                                    minWidth: "unset",
+                                    padding: "6px",
+                                    color: "gray",
+                                    "&:hover": { bgcolor: "#e0f7fa" },
+                                  }}
+                                >
+                                  <ChatBubbleOutlineIcon fontSize="small" />
+                                </Button>
                               </Box>
                             </Box>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              mt={1}
-                            >
+
+                            <Typography variant="body2" color="text.secondary">
                               {task.description || "No description"}
                             </Typography>
+
+                            {commentModalTask?._id === task._id && (
+                              <Box mt={2}>
+                                <Box mb={1}>
+                                  {task.comments?.map((c, idx) => (
+                                    <Typography
+                                      key={idx}
+                                      variant="body2"
+                                      sx={{
+                                        mb: 0.5,
+                                        pl: 1,
+                                        borderLeft: "2px solid #ccc",
+                                      }}
+                                    >
+                                      🗨️ {c.text}
+                                    </Typography>
+                                  ))}
+                                </Box>
+
+                                <TextField
+                                  size="small"
+                                  placeholder="Add a comment..."
+                                  fullWidth
+                                  value={newComment}
+                                  onChange={(e) =>
+                                    setNewComment(e.target.value)
+                                  }
+                                />
+
+                                <Box
+                                  mt={1}
+                                  display="flex"
+                                  justifyContent="flex-end"
+                                >
+                                  <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={handleAddComment}
+                                    disabled={!newComment.trim()}
+                                  >
+                                    Add
+                                  </Button>
+                                </Box>
+                              </Box>
+                            )}
                           </Box>
                         )}
                       </Draggable>
