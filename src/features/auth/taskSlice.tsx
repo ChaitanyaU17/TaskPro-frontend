@@ -13,9 +13,13 @@ export interface Task {
   description?: string;
   status: "To Do" | "In Progress" | "Done";
   project: string;
-  assigneeEmail?: string;
-  comments?: { text: string }[];
+  comments?: { text: string; user?: { email: string; role: string } }[];
   createdAt: string;
+  assignee?: string;
+  assigneeEmail?: string;
+  deadline?: string;
+  priority?: "Low" | "Medium" | "High";
+  tags?: string[];
 }
 
 interface TaskState {
@@ -38,6 +42,7 @@ export const fetchTasks = createAsyncThunk(
       const res = await axios.get(`${baseUrl}/task?project=${projectId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("Fetched tasks:", res.data);
       return res.data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -59,18 +64,41 @@ export const createTask = createAsyncThunk(
       description,
       status,
       project,
-    }: { title: string; description?: string; status: string; project: string },
+      assignee,
+      deadline,
+      priority,
+      tags,
+    }: {
+      title: string;
+      description?: string;
+      status: string;
+      project: string;
+      assignee?: string;
+      deadline?: string;
+      priority?: "Low" | "Medium" | "High";
+      tags?: string;
+    },
     { getState, rejectWithValue }
   ) => {
     const token = (getState() as RootState).auth.token;
     try {
       const res = await axios.post(
         `${baseUrl}/task`,
-        { title, description, status, project },
+        {
+          title,
+          description,
+          status,
+          project,
+          assignee,
+          deadline,
+          priority,
+          tags: tags ? tags.split(",").map((t) => t.trim()) : [],
+        },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       return res.data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -82,6 +110,7 @@ export const createTask = createAsyncThunk(
     }
   }
 );
+
 
 // Async thunk to update a task
 export const editTask = createAsyncThunk(
@@ -142,33 +171,6 @@ export const fetchComments = createAsyncThunk(
       return { taskId, comments: res.data };
     } catch (err) {
       return rejectWithValue("Failed to fetch comments");
-    }
-  }
-);
-
-// add comment
-export const addComment = createAsyncThunk(
-  "comments/addComment",
-  async (
-    { taskId, text }: { taskId: string; text: string },
-    { getState, rejectWithValue }
-  ) => {
-    const token = (getState() as RootState).auth.token;
-    try {
-      const res = await axios.post(
-        `${baseUrl}/comments/${taskId}`,
-        { text },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.message || "Failed to add comment"
-      );
     }
   }
 );

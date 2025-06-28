@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { io } from "socket.io-client";
 import { useParams } from "react-router-dom";
 import {
   Box,
@@ -25,12 +26,14 @@ import {
   createTask,
   deleteTask,
   moveTaskStatus,
-  addComment,
 } from "../features/auth/taskSlice";
 import type { Task } from "../features/auth/taskSlice";
 import { updateTaskComments } from "../features/auth/taskSlice";
+import { addComment } from "../features/auth/commentSlice";
 
 const statuses: Task["status"][] = ["To Do", "In Progress", "Done"];
+
+const socket = io("http://localhost:5000");
 
 const BoardPage: React.FC = () => {
   const { id } = useParams();
@@ -48,16 +51,20 @@ const BoardPage: React.FC = () => {
   const [editDescription, setEditDescription] = useState("");
   const [editStatus, setEditStatus] = useState<Task["status"]>("To Do");
 
-  // new state
+  // comment state
   const [commentModalTask, setCommentModalTask] = useState<Task | null>(null);
   const [newComment, setNewComment] = useState("");
+
+  const [assignee, setAssignee] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [priority, setPriority] = useState<Task["priority"]>("Medium");
+  const [tags, setTags] = useState("");
 
   const handleAddComment = async () => {
     if (commentModalTask && newComment.trim()) {
       const result = await dispatch(
         addComment({ taskId: commentModalTask._id, text: newComment })
       );
-
       if (addComment.fulfilled.match(result)) {
         const newCmt = result.payload;
 
@@ -80,16 +87,48 @@ const BoardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    socket.on("commentAdded", (comment) => {
+      // Check if the comment belongs to a task on this board
+      dispatch({
+        type: "task/updateTaskComments",
+        payload: {
+          taskId: comment.task,
+          comment: { text: comment.text }, // You can include email if needed
+        },
+      });
+    });
+
+    return () => {
+      socket.off("commentAdded");
+    };
+  }, []);
+
+  useEffect(() => {
     if (projectId) dispatch(fetchTasks(projectId));
   }, [dispatch, projectId]);
 
   const handleCreate = () => {
     if (!title.trim()) return;
-    dispatch(createTask({ title, description, status, project: projectId }));
+    dispatch(
+      createTask({
+        title,
+        description,
+        status,
+        project: projectId,
+        assignee,
+        deadline,
+        priority,
+        tags,
+      })
+    );
     setOpen(false);
     setTitle("");
     setDescription("");
     setStatus("To Do");
+    setAssignee("");
+    setDeadline("");
+    setPriority("Medium");
+    setTags("");
   };
 
   const openTaskModal = (task: Task) => {
@@ -161,7 +200,9 @@ const BoardPage: React.FC = () => {
       </Button>
 
       {loading ? (
-        <CircularProgress />
+        <Box display="flex" justifyContent="center" mt={5}>
+          <CircularProgress />
+        </Box>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
           <Box display="flex" gap={2}>
@@ -196,13 +237,20 @@ const BoardPage: React.FC = () => {
                             sx={{
                               p: 2,
                               mb: 2,
-                              bgcolor: "#c4c9cc",
+                              bgcolor: "#f5f5f5",
                               borderRadius: 2,
                               boxShadow: 1,
-                              position: "relative",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: 1,
                             }}
                           >
-                            <Box display="flex" justifyContent="space-between">
+                            {/* Header: Title + Buttons */}
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              alignItems="center"
+                            >
                               <Typography fontWeight="bold">
                                 {task.title}
                               </Typography>
@@ -210,11 +258,7 @@ const BoardPage: React.FC = () => {
                                 <Button
                                   size="small"
                                   onClick={() => openTaskModal(task)}
-                                  sx={{
-                                    minWidth: "unset",
-                                    padding: "6px",
-                                    "&:hover": { bgcolor: "#e0f7fa" },
-                                  }}
+                                  sx={{ minWidth: "unset", p: "4px" }}
                                 >
                                   <EditIcon fontSize="small" />
                                 </Button>
@@ -222,11 +266,7 @@ const BoardPage: React.FC = () => {
                                   size="small"
                                   color="error"
                                   onClick={() => dispatch(deleteTask(task._id))}
-                                  sx={{
-                                    minWidth: "unset",
-                                    padding: "6px",
-                                    "&:hover": { bgcolor: "#ffebee" },
-                                  }}
+                                  sx={{ minWidth: "unset", p: "4px" }}
                                 >
                                   <DeleteIcon fontSize="small" />
                                 </Button>
@@ -241,9 +281,8 @@ const BoardPage: React.FC = () => {
                                   }
                                   sx={{
                                     minWidth: "unset",
-                                    padding: "6px",
+                                    p: "4px",
                                     color: "gray",
-                                    "&:hover": { bgcolor: "#e0f7fa" },
                                   }}
                                 >
                                   <ChatBubbleOutlineIcon fontSize="small" />
@@ -251,24 +290,75 @@ const BoardPage: React.FC = () => {
                               </Box>
                             </Box>
 
+                            {/* Description */}
                             <Typography variant="body2" color="text.secondary">
                               {task.description || "No description"}
                             </Typography>
 
+                            {/* Metadata Section */}
+                            <Box display="flex" flexWrap="wrap" gap={1}>
+                              {task.assigneeEmail && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  👤 {task.assigneeEmail}
+                                </Typography>
+                              )}
+                              {task.deadline && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  📅{" "}
+                                  {new Date(task.deadline).toLocaleDateString(
+                                    "en-IN",
+                                    {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    }
+                                  )}
+                                </Typography>
+                              )}
+
+                              {task.priority && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  ⚡ Priority: {task.priority}
+                                </Typography>
+                              )}
+                            </Box>
+
+                            {/* Tags */}
+                            {task.tags && task.tags.length > 0 && (
+                              <Box display="flex" gap={0.5} flexWrap="wrap">
+                                {task.tags.map((tag, i) => (
+                                  <Box
+                                    key={i}
+                                    px={1}
+                                    py={0.25}
+                                    bgcolor="#e0e0e0"
+                                    borderRadius="8px"
+                                  >
+                                    <Typography variant="caption">
+                                      #{tag}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
+
+                            {/* Comments (if open) */}
                             {commentModalTask?._id === task._id && (
-                              <Box mt={2}>
+                              <Box mt={1}>
                                 <Box mb={1}>
                                   {task.comments?.map((c, idx) => (
-                                    <Typography
-                                      key={idx}
-                                      variant="body2"
-                                      sx={{
-                                        mb: 0.5,
-                                        pl: 1,
-                                        borderLeft: "2px solid #ccc",
-                                      }}
-                                    >
-                                      🗨️ {c.text}
+                                    <Typography key={idx} variant="body2">
+                                      🗨️ <strong>{c.user?.email}</strong>:{" "}
+                                      {c.text}
                                     </Typography>
                                   ))}
                                 </Box>
@@ -352,6 +442,46 @@ const BoardPage: React.FC = () => {
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            label="Assignee Email"
+            fullWidth
+            margin="normal"
+            value={assignee}
+            onChange={(e) => setAssignee(e.target.value)}
+          />
+
+          <TextField
+            label="Deadline"
+            type="date"
+            fullWidth
+            margin="normal"
+            InputLabelProps={{ shrink: true }}
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+          />
+
+          <TextField
+            label="Priority"
+            select
+            fullWidth
+            margin="normal"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as Task["priority"])}
+          >
+            {["Low", "Medium", "High"].map((level) => (
+              <MenuItem key={level} value={level}>
+                {level}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Tags (comma separated)"
+            fullWidth
+            margin="normal"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
