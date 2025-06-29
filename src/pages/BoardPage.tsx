@@ -59,6 +59,7 @@ const BoardPage: React.FC = () => {
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("Medium");
   const [tags, setTags] = useState("");
+  const role = useSelector((state: RootState) => state.auth.role);
 
   const handleAddComment = async () => {
     if (commentModalTask && newComment.trim()) {
@@ -297,14 +298,15 @@ const BoardPage: React.FC = () => {
 
                             {/* Metadata Section */}
                             <Box display="flex" flexWrap="wrap" gap={1}>
-                              {task.assigneeEmail && (
+                              {task.assigneeEmail || task.assignee ? (
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
                                 >
-                                  👤 {task.assigneeEmail}
+                                  👤 {task.assigneeEmail || task.assignee}
                                 </Typography>
-                              )}
+                              ) : null}
+
                               {task.deadline && (
                                 <Typography
                                   variant="caption"
@@ -357,36 +359,39 @@ const BoardPage: React.FC = () => {
                                 <Box mb={1}>
                                   {task.comments?.map((c, idx) => (
                                     <Typography key={idx} variant="body2">
-                                      🗨️ <strong>{c.user?.email}</strong>:{" "}
-                                      {c.text}
+                                      🗨️ {c.text}
                                     </Typography>
                                   ))}
                                 </Box>
 
-                                <TextField
-                                  size="small"
-                                  placeholder="Add a comment..."
-                                  fullWidth
-                                  value={newComment}
-                                  onChange={(e) =>
-                                    setNewComment(e.target.value)
-                                  }
-                                />
-
-                                <Box
-                                  mt={1}
-                                  display="flex"
-                                  justifyContent="flex-end"
-                                >
-                                  <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={handleAddComment}
-                                    disabled={!newComment.trim()}
-                                  >
-                                    Add
-                                  </Button>
-                                </Box>
+                                {/* Show input only if user is Admin */}
+                                {role === "Admin" && (
+                                  <>
+                                    <TextField
+                                      size="small"
+                                      placeholder="Add a comment..."
+                                      fullWidth
+                                      value={newComment}
+                                      onChange={(e) =>
+                                        setNewComment(e.target.value)
+                                      }
+                                    />
+                                    <Box
+                                      mt={1}
+                                      display="flex"
+                                      justifyContent="flex-end"
+                                    >
+                                      <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleAddComment}
+                                        disabled={!newComment.trim()}
+                                      >
+                                        Add
+                                      </Button>
+                                    </Box>
+                                  </>
+                                )}
                               </Box>
                             )}
                           </Box>

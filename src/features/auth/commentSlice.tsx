@@ -17,11 +17,13 @@ interface Comment {
 }
 
 interface CommentState {
+  comments: Comment[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: CommentState = {
+  comments: [],
   loading: false,
   error: null,
 };
