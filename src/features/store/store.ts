@@ -3,6 +3,7 @@ import authReducer from '../auth/authSlice';
 import taskReduser from '../auth/taskSlice';
 import projectReducer from '../auth/projectSlice';
 import commentReducer from '../auth/commentSlice';
+import AdminReducer from '../auth/adminUserSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     task: taskReduser,
     project: projectReducer,
     comments: commentReducer,
+    adminUser: AdminReducer,
   },
 });
 

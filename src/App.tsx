@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import BoardPage from "./pages/BoardPage";
   import { ToastContainer } from 'react-toastify';
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -26,6 +27,15 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Register />} />
+
+           <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={["Admin"]}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
         </Routes>
       </BrowserRouter>
       <ToastContainer />

@@ -42,7 +42,12 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (values: LoginValues) => {
     const result = await dispatch(loginThunk(values));
     if (loginThunk.fulfilled.match(result)) {
-      navigate("/dashboard");
+      const role = result.payload.role; // ✅ get role from payload
+      if (role === "Admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
     } else {
       toast.error("Login failed");
       console.log(result.payload);
@@ -53,7 +58,12 @@ const LoginPage: React.FC = () => {
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Box textAlign="center">
-          <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            mb={1}
+          >
             <AssignmentIcon color="primary" sx={{ mr: 1 }} />
             <Typography
               variant="h4"
