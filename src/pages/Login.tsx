@@ -10,14 +10,14 @@ import {
 import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
-import { loginThunk } from "../features/auth/authSlice";
+import { loginThunk } from "../features/slices/authSlice";
 import type { AppDispatch, RootState } from "../features/store/store";
 import { useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
-// const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+// const baseUrl = import.meta.env.VITE_API_BASE_URL";
 
 interface LoginValues {
   email: string;
@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (values: LoginValues) => {
     const result = await dispatch(loginThunk(values));
     if (loginThunk.fulfilled.match(result)) {
-      const role = result.payload.role; // ✅ get role from payload
+      const role = result.payload.role; 
       if (role === "Admin") {
         navigate("/admin");
       } else {

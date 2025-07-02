@@ -13,7 +13,7 @@ import {
   TableContainer,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllUsers, deleteUserById } from "../features/auth/adminUserSlice";
+import { fetchAllUsers, deleteUserById } from "../features/slices/adminUserSlice";
 import type { RootState, AppDispatch } from "../features/store/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";

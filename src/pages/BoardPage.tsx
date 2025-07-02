@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { io } from "socket.io-client";
 import { useParams } from "react-router-dom";
 import {
   Box,
@@ -26,14 +26,15 @@ import {
   createTask,
   deleteTask,
   moveTaskStatus,
-} from "../features/auth/taskSlice";
-import type { Task } from "../features/auth/taskSlice";
-import { updateTaskComments } from "../features/auth/taskSlice";
-import { addComment } from "../features/auth/commentSlice";
+} from "../features/slices/taskSlice.tsx";
+import type { Task } from "../features/slices/taskSlice.tsx";
+import { updateTaskComments } from "../features/slices/taskSlice.tsx";
+import { addComment } from "../features/slices/commentSlice.tsx";
+import TaskActivity from "./TaskEditingTracker.tsx";
+import OnlineUsers from "./OnlineUsers";
+import socket from "../socket.ts";
 
 const statuses: Task["status"][] = ["To Do", "In Progress", "Done"];
-
-const socket = io("http://localhost:5000");
 
 const BoardPage: React.FC = () => {
   const { id } = useParams();
@@ -60,6 +61,16 @@ const BoardPage: React.FC = () => {
   const [priority, setPriority] = useState<Task["priority"]>("Medium");
   const [tags, setTags] = useState("");
   const role = useSelector((state: RootState) => state.auth.role);
+
+  // when editing starts
+  useEffect(() => {
+    if (selectedTask?._id) {
+      socket.emit("editing-tasks", { taskId: selectedTask._id });
+      return () => {
+        socket.emit("stop-editing-task", { taskId: selectedTask._id });
+      };
+    }
+  }, [selectedTask]);
 
   const handleAddComment = async () => {
     if (commentModalTask && newComment.trim()) {
@@ -89,12 +100,11 @@ const BoardPage: React.FC = () => {
 
   useEffect(() => {
     socket.on("commentAdded", (comment) => {
-      // Check if the comment belongs to a task on this board
       dispatch({
         type: "task/updateTaskComments",
         payload: {
           taskId: comment.task,
-          comment: { text: comment.text }, // You can include email if needed
+          comment: { text: comment.text },
         },
       });
     });
@@ -192,13 +202,19 @@ const BoardPage: React.FC = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" fontWeight="bold" mb={3}>
-        Project Board
-      </Typography>
-
-      <Button variant="contained" onClick={() => setOpen(true)} sx={{ mb: 2 }}>
-        + New Task
-      </Button>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h4" fontWeight="bold" mb={3}>
+          Project Board
+        </Typography>
+        <Button
+          variant="contained"
+          onClick={() => setOpen(true)}
+          sx={{ mb: 2 }}
+        >
+          + New Task
+        </Button>
+      </Box>
+      <OnlineUsers />
 
       {loading ? (
         <Box display="flex" justifyContent="center" mt={5}>
@@ -238,7 +254,7 @@ const BoardPage: React.FC = () => {
                             sx={{
                               p: 2,
                               mb: 2,
-                              bgcolor: "#f5f5f5",
+                              bgcolor: "#c4c9cc",
                               borderRadius: 2,
                               boxShadow: 1,
                               display: "flex",
@@ -246,7 +262,7 @@ const BoardPage: React.FC = () => {
                               gap: 1,
                             }}
                           >
-                            {/* Header: Title + Buttons */}
+                            {/* Task: Title */}
                             <Box
                               display="flex"
                               justifyContent="space-between"
@@ -255,6 +271,7 @@ const BoardPage: React.FC = () => {
                               <Typography fontWeight="bold">
                                 {task.title}
                               </Typography>
+                              <TaskActivity taskId={task._id} />
                               <Box display="flex" gap={1}>
                                 <Button
                                   size="small"
@@ -296,17 +313,18 @@ const BoardPage: React.FC = () => {
                               {task.description || "No description"}
                             </Typography>
 
-                            {/* Metadata Section */}
+                            {/* Assignee Email */}
                             <Box display="flex" flexWrap="wrap" gap={1}>
-                              {task.assigneeEmail || task.assignee ? (
+                              {task.assigneeEmail ? (
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
                                 >
-                                  👤 {task.assigneeEmail || task.assignee}
+                                  👤 {task.assigneeEmail}
                                 </Typography>
                               ) : null}
 
+                              {/* Deadline */}
                               {task.deadline && (
                                 <Typography
                                   variant="caption"
@@ -324,6 +342,7 @@ const BoardPage: React.FC = () => {
                                 </Typography>
                               )}
 
+                              {/* Priority */}
                               {task.priority && (
                                 <Typography
                                   variant="caption"
@@ -353,7 +372,7 @@ const BoardPage: React.FC = () => {
                               </Box>
                             )}
 
-                            {/* Comments (if open) */}
+                            {/* Comments */}
                             {commentModalTask?._id === task._id && (
                               <Box mt={1}>
                                 <Box mb={1}>

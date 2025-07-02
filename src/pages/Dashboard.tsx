@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
 import {
   Container,
@@ -12,10 +13,10 @@ import {
   CircularProgress,
   Paper,
 } from "@mui/material";
-import { fetchProjects, createProject } from "../features/auth/projectSlice";
+import { fetchProjects, createProject } from "../features/slices/projectSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../features/auth/authSlice";
+import { logout } from "../features/slices/authSlice";
 import type { RootState, AppDispatch } from "../features/store/store";
 import { toast } from "react-toastify";
 
@@ -23,10 +24,10 @@ const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  const { projects, loading, error } = useSelector(
+  const { projects, loading } = useSelector(
     (state: RootState) => state.project
   );
-  const { token, role } = useSelector((state: RootState) => state.auth);
+  const { role } = useSelector((state: RootState) => state.auth);
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -79,7 +80,7 @@ const Dashboard: React.FC = () => {
       ) : projects.length === 0 ? (
         <Typography>No projects found.</Typography>
       ) : (
-        <Paper sx={{ p: 2, bgcolor: '#c4c9cc' }}>
+        <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
           {projects.map((project) => (
             <Box
               key={project._id}
