@@ -170,6 +170,7 @@ export const fetchComments = createAsyncThunk(
       });
       return { taskId, comments: res.data };
     } catch (err) {
+       console.error("Error fetching comments:", err);
       return rejectWithValue("Failed to fetch comments");
     }
   }

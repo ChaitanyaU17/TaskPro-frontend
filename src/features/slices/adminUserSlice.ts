@@ -32,6 +32,7 @@ export const fetchAllUsers = createAsyncThunk(
       });
       return res.data;
     } catch (err) {
+      console.error("Error while fetching users: ", err)
       return rejectWithValue('Failed to fetch users');
     }
   }
@@ -47,6 +48,7 @@ export const deleteUserById = createAsyncThunk(
       });
       return userId;
     } catch (err) {
+      console.error('Error deleting user', err);
       return rejectWithValue('Failed to delete user');
     }
   }

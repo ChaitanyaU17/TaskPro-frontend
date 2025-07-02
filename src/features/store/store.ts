@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from '../auth/authSlice';
-import taskReduser from '../auth/taskSlice';
-import projectReducer from '../auth/projectSlice';
-import commentReducer from '../auth/commentSlice';
-import AdminReducer from '../auth/adminUserSlice';
+import authReducer from '../slices/authSlice';
+import taskReduser from '../slices/taskSlice';
+import projectReducer from '../slices/projectSlice';
+import commentReducer from '../slices/commentSlice';
+import AdminReducer from '../slices/adminUserSlice';
 
 export const store = configureStore({
   reducer: {
