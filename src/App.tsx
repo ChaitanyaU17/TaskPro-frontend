@@ -6,7 +6,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import BoardPage from "./pages/BoardPage";
-  import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {

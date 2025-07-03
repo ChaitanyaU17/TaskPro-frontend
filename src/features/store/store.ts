@@ -4,6 +4,7 @@ import taskReduser from '../slices/taskSlice';
 import projectReducer from '../slices/projectSlice';
 import commentReducer from '../slices/commentSlice';
 import AdminReducer from '../slices/adminUserSlice';
+import activityReducer from '../slices/activitySlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     project: projectReducer,
     comments: commentReducer,
     adminUser: AdminReducer,
+    activity: activityReducer,
   },
 });
 

@@ -13,6 +13,7 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -30,9 +31,11 @@ import {
 import type { Task } from "../features/slices/taskSlice.tsx";
 import { updateTaskComments } from "../features/slices/taskSlice.tsx";
 import { addComment } from "../features/slices/commentSlice.tsx";
-import TaskActivity from "./TaskEditingTracker.tsx";
 import OnlineUsers from "./OnlineUsers";
 import socket from "../socket.ts";
+import ActivityLog from "./ActivityLog.tsx";
+import { fetchActivityLogs } from "../features/slices/activitySlice.ts";
+import CloseIcon from "@mui/icons-material/Close";
 
 const statuses: Task["status"][] = ["To Do", "In Progress", "Done"];
 
@@ -60,17 +63,8 @@ const BoardPage: React.FC = () => {
   const [deadline, setDeadline] = useState("");
   const [priority, setPriority] = useState<Task["priority"]>("Medium");
   const [tags, setTags] = useState("");
+  const [logOpen, setLogOpen] = useState(false);
   const role = useSelector((state: RootState) => state.auth.role);
-
-  // when editing starts
-  useEffect(() => {
-    if (selectedTask?._id) {
-      socket.emit("editing-tasks", { taskId: selectedTask._id });
-      return () => {
-        socket.emit("stop-editing-task", { taskId: selectedTask._id });
-      };
-    }
-  }, [selectedTask]);
 
   const handleAddComment = async () => {
     if (commentModalTask && newComment.trim()) {
@@ -93,10 +87,21 @@ const BoardPage: React.FC = () => {
           updateTaskComments({ taskId: commentModalTask._id, comment: newCmt })
         );
 
+        dispatch(fetchActivityLogs(projectId)); // re-fetch logs
+
         setNewComment("");
       }
     }
   };
+
+  useEffect(() => {
+    socket.on("activity-logged", () => {
+      dispatch(fetchActivityLogs(projectId));
+    });
+    return () => {
+      socket.off("activity-logged");
+    };
+  }, [projectId]);
 
   useEffect(() => {
     socket.on("commentAdded", (comment) => {
@@ -206,6 +211,7 @@ const BoardPage: React.FC = () => {
         <Typography variant="h4" fontWeight="bold" mb={3}>
           Project Board
         </Typography>
+
         <Button
           variant="contained"
           onClick={() => setOpen(true)}
@@ -213,8 +219,17 @@ const BoardPage: React.FC = () => {
         >
           + New Task
         </Button>
+        <OnlineUsers />
+        {role === "Admin" && (
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => setLogOpen(true)}
+          >
+            View Activity Logs
+          </Button>
+        )}
       </Box>
-      <OnlineUsers />
 
       {loading ? (
         <Box display="flex" justifyContent="center" mt={5}>
@@ -271,7 +286,6 @@ const BoardPage: React.FC = () => {
                               <Typography fontWeight="bold">
                                 {task.title}
                               </Typography>
-                              <TaskActivity taskId={task._id} />
                               <Box display="flex" gap={1}>
                                 <Button
                                   size="small"
@@ -280,14 +294,19 @@ const BoardPage: React.FC = () => {
                                 >
                                   <EditIcon fontSize="small" />
                                 </Button>
-                                <Button
-                                  size="small"
-                                  color="error"
-                                  onClick={() => dispatch(deleteTask(task._id))}
-                                  sx={{ minWidth: "unset", p: "4px" }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </Button>
+                                {role === "Admin" && (
+                                  <Button
+                                    size="small"
+                                    color="error"
+                                    onClick={() =>
+                                      dispatch(deleteTask(task._id))
+                                    }
+                                    sx={{ minWidth: "unset", p: "4px" }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </Button>
+                                )}
+
                                 <Button
                                   size="small"
                                   onClick={() =>
@@ -566,6 +585,29 @@ const BoardPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {role === "Admin" && (
+        <Dialog
+          open={logOpen}
+          onClose={() => setLogOpen(false)}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle>
+            Activity Logs
+            <IconButton
+              aria-label="close"
+              onClick={() => setLogOpen(false)}
+              sx={{ position: "absolute", right: 8, top: 8 }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <ActivityLog projectId={projectId} />
+          </DialogContent>
+        </Dialog>
+      )}
     </Box>
   );
 };
