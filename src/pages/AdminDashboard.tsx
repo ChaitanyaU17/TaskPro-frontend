@@ -13,7 +13,10 @@ import {
   TableContainer,
 } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAllUsers, deleteUserById } from "../features/slices/adminUserSlice";
+import {
+  fetchAllUsers,
+  deleteUserById,
+} from "../features/slices/adminUserSlice";
 import type { RootState, AppDispatch } from "../features/store/store";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -65,7 +68,7 @@ const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <Box maxWidth="md" mx="auto" mt={4} px={2}>
+    <Box maxWidth="md" mx="auto" mt={1} px={2}>
       <Box
         display="flex"
         justifyContent="space-between"
@@ -73,7 +76,18 @@ const AdminDashboard: React.FC = () => {
         mb={1}
         p={3}
       >
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          fontSize="25px"
+          sx={{
+            background:
+              "linear-gradient(135deg, rgb(74, 161, 201) 10%, rgb(128, 74, 194) 40%, rgb(192, 112, 112) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+          gutterBottom
+        >
           Admin Panel
         </Typography>
 
@@ -83,7 +97,7 @@ const AdminDashboard: React.FC = () => {
           onClick={() => navigate("/dashboard")}
           sx={{ mb: 2 }}
         >
-          Go to Create Project
+          Create Project
         </Button>
       </Box>
 

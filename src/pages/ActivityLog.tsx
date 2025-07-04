@@ -30,7 +30,7 @@ const ActivityLog: React.FC<Props> = ({ projectId }) => {
   }, [dispatch, projectId]);
 
   return (
-    <Box>
+    <Box >
       {loading && <CircularProgress size={24} />}
       {error && <Typography color="error">{error}</Typography>}
 

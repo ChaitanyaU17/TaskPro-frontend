@@ -59,7 +59,7 @@ const Home: React.FC = () => {
       </AppBar>
 
       {/* headline */}
-      <Box sx={{ bgcolor: "grey.100", py: 10 }}>
+      <Box sx={{  py: 10 }}>
         <Container>
           <Stack
             direction={{ xs: "column", md: "row" }}
@@ -120,7 +120,7 @@ const Home: React.FC = () => {
       </Box>
 
       {/* BELOW HERO */}
-      <Box textAlign="center" sx={{ py: 8, bgcolor: 'grey.100' }}>
+      <Box textAlign="center" sx={{ py: 8}}>
         <Typography variant="h4" sx={{ fontWeight: "bold", mb: 1 }}>
           Capture, organize, and tackle your todos from anywhere
         </Typography>

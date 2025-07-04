@@ -1,4 +1,3 @@
-// src/features/comments/commentSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import type { RootState } from "../store/store";
@@ -42,11 +41,12 @@ export const addComment = createAsyncThunk(
         { text },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return res.data; // new comment object
-    } catch (err: any) {
-      return rejectWithValue(
-        err.response?.data?.message || "Failed to add comment"
-      );
+      return res.data; 
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return rejectWithValue(err.message);
+      }
+      return rejectWithValue("Failed to add comment");
     }
   }
 );

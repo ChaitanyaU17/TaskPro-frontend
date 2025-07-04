@@ -6,7 +6,7 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme.tsx";
 import { Provider } from 'react-redux';
-import { store } from './features/store/store.ts';
+import { store } from './features/store/store.tsx';
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
