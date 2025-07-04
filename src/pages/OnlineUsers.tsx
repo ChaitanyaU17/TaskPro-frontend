@@ -1,4 +1,3 @@
-// OnlineUsers.tsx
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 import { useSelector } from "react-redux";
@@ -33,26 +32,43 @@ const OnlineUsers: React.FC = () => {
   }, [userId, userEmail]);
 
   return (
-    <Box mb={2}>
-      <Box display="flex" justifyContent="left" alignItems="center" gap={1}>
-        <Typography variant="subtitle2" mt={0.5} fontSize={17} fontWeight={600}>
-          Online Users:
+     <Box display="flex" alignItems="center" >
+      <Box display="flex" alignItems="center" gap={1}>
+
+        <Box
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            bgcolor: "success.main",  
+          }}
+        />
+
+        <Typography
+          variant="subtitle2"
+          fontSize={15}
+          fontWeight={600}
+          color="success.main" 
+        >
+          Online
         </Typography>
-        <Box display="flex" flexWrap="wrap" gap={1} mt={1}>
-          {onlineUsers.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              No users online
-            </Typography>
-          ) : (
-            onlineUsers.map((user) => (
-              <Chip
-                key={user.userId}
-                label={user.email === userEmail ? "You" : user.email}
-                color={user.email === userEmail ? "primary" : "success"}
-              />
-            ))
-          )}
-        </Box>
+      </Box>
+
+      <Box display="flex" flexWrap="wrap" ml={1} gap={1}>
+        {onlineUsers.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No users online
+          </Typography>
+        ) : (
+          onlineUsers.map((user) => (
+            <Chip
+              key={user.userId}
+              label={user.email === userEmail ? "You" : user.email}
+              color={user.email === userEmail ? "primary" : "success"}
+              size="small" 
+            />
+          ))
+        )}
       </Box>
     </Box>
   );

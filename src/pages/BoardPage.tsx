@@ -18,6 +18,11 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PersonIcon from "@mui/icons-material/Person";
+import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
+import CommentIcon from "@mui/icons-material/Comment";
+import TurnedInNotIcon from "@mui/icons-material/TurnedInNot";
 import { useDispatch, useSelector } from "react-redux";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { AppDispatch, RootState } from "../features/store/store";
@@ -34,8 +39,10 @@ import { addComment } from "../features/slices/commentSlice.tsx";
 import OnlineUsers from "./OnlineUsers";
 import socket from "../socket.ts";
 import ActivityLog from "./ActivityLog.tsx";
-import { fetchActivityLogs } from "../features/slices/activitySlice.ts";
+import { fetchActivityLogs } from "../features/slices/activitySlice.tsx";
 import CloseIcon from "@mui/icons-material/Close";
+import dayjs from "dayjs";
+import { Collapse } from "@mui/material";
 
 const statuses: Task["status"][] = ["To Do", "In Progress", "Done"];
 
@@ -101,7 +108,7 @@ const BoardPage: React.FC = () => {
     return () => {
       socket.off("activity-logged");
     };
-  }, [projectId]);
+  }, [projectId, dispatch]);
 
   useEffect(() => {
     socket.on("commentAdded", (comment) => {
@@ -117,7 +124,7 @@ const BoardPage: React.FC = () => {
     return () => {
       socket.off("commentAdded");
     };
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (projectId) dispatch(fetchTasks(projectId));
@@ -206,29 +213,50 @@ const BoardPage: React.FC = () => {
   }, {} as Record<Task["status"], Task[]>);
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" fontWeight="bold" mb={3}>
+    <Box p={4}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={2}
+        mb={4}
+      >
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          fontSize="25px"
+          sx={{
+            background:
+              "linear-gradient(135deg, rgb(74, 161, 201) 10%, rgb(128, 74, 194) 40%, rgb(192, 112, 112) 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
           Project Board
         </Typography>
 
-        <Button
-          variant="contained"
-          onClick={() => setOpen(true)}
-          sx={{ mb: 2 }}
-        >
-          + New Task
-        </Button>
-        <OnlineUsers />
-        {role === "Admin" && (
+        <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
           <Button
-            variant="outlined"
-            color="secondary"
-            onClick={() => setLogOpen(true)}
+            variant="contained"
+            color="primary"
+            onClick={() => setOpen(true)}
           >
-            View Activity Logs
+            New Task
           </Button>
-        )}
+
+          <OnlineUsers />
+
+          {role === "Admin" && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => setLogOpen(true)}
+            >
+              View Activity Logs
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {loading ? (
@@ -248,7 +276,10 @@ const BoardPage: React.FC = () => {
                       flex: 1,
                       p: 2,
                       minHeight: "400px",
-                      bgcolor: "grey.100",
+                      background:
+                        "linear-gradient(135deg,rgb(215, 237, 247) 10%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
+                      backgroundRepeat: "no-repeat",
+                      backgroundAttachment: "fixed",
                     }}
                   >
                     <Typography variant="h6" fontWeight="bold" mb={2}>
@@ -269,8 +300,8 @@ const BoardPage: React.FC = () => {
                             sx={{
                               p: 2,
                               mb: 2,
-                              bgcolor: "#c4c9cc",
-                              borderRadius: 2,
+                              bgcolor: "#fff",
+                              borderRadius: 1,
                               boxShadow: 1,
                               display: "flex",
                               flexDirection: "column",
@@ -323,6 +354,13 @@ const BoardPage: React.FC = () => {
                                   }}
                                 >
                                   <ChatBubbleOutlineIcon fontSize="small" />
+                                  <Typography
+                                    variant="caption"
+                                    fontSize={12}
+                                    p={0.5}
+                                  >
+                                    {task.comments?.length || ""}
+                                  </Typography>
                                 </Button>
                               </Box>
                             </Box>
@@ -333,42 +371,81 @@ const BoardPage: React.FC = () => {
                             </Typography>
 
                             {/* Assignee Email */}
-                            <Box display="flex" flexWrap="wrap" gap={1}>
+                            <Box display="flex" flexWrap="wrap" gap={0.5}>
                               {task.assigneeEmail ? (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
+                                <Box
+                                  display="flex"
+                                  gap={0.5}
+                                  alignItems="center"
                                 >
-                                  👤 {task.assigneeEmail}
-                                </Typography>
+                                  <PersonIcon fontSize="inherit" />
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    {task.assigneeEmail}
+                                  </Typography>
+                                </Box>
                               ) : null}
 
                               {/* Deadline */}
+
                               {task.deadline && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  gap={0.5}
                                 >
-                                  📅{" "}
-                                  {new Date(task.deadline).toLocaleDateString(
-                                    "en-IN",
-                                    {
-                                      year: "numeric",
-                                      month: "short",
-                                      day: "numeric",
+                                  <AccessTimeIcon
+                                    fontSize="inherit"
+                                    sx={{
+                                      color: dayjs(task.deadline).isBefore(
+                                        dayjs(),
+                                        "day"
+                                      )
+                                        ? "error.main"
+                                        : "text.secondary",
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    color={
+                                      task.deadline &&
+                                      dayjs(task.deadline).isBefore(
+                                        dayjs(),
+                                        "day"
+                                      )
+                                        ? "error"
+                                        : "textSecondary"
                                     }
-                                  )}
-                                </Typography>
+                                  >
+                                    {new Date(task.deadline).toLocaleDateString(
+                                      "en-IN",
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                      }
+                                    )}
+                                  </Typography>
+                                </Box>
                               )}
 
                               {/* Priority */}
                               {task.priority && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  gap={0.5}
                                 >
-                                  ⚡ Priority: {task.priority}
-                                </Typography>
+                                  <SignalCellularAltIcon fontSize="inherit" />
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    Priority: {task.priority}
+                                  </Typography>
+                                </Box>
                               )}
                             </Box>
 
@@ -377,14 +454,17 @@ const BoardPage: React.FC = () => {
                               <Box display="flex" gap={0.5} flexWrap="wrap">
                                 {task.tags.map((tag, i) => (
                                   <Box
+                                    display="flex"
+                                    alignItems="center"
                                     key={i}
                                     px={1}
                                     py={0.25}
-                                    bgcolor="#e0e0e0"
+                                    bgcolor="grey.100"
                                     borderRadius="8px"
                                   >
+                                    <TurnedInNotIcon fontSize="inherit" />
                                     <Typography variant="caption">
-                                      #{tag}
+                                      {tag}
                                     </Typography>
                                   </Box>
                                 ))}
@@ -392,13 +472,21 @@ const BoardPage: React.FC = () => {
                             )}
 
                             {/* Comments */}
-                            {commentModalTask?._id === task._id && (
+                            <Collapse in={commentModalTask?._id === task._id}>
                               <Box mt={1}>
                                 <Box mb={1}>
                                   {task.comments?.map((c, idx) => (
-                                    <Typography key={idx} variant="body2">
-                                      🗨️ {c.text}
-                                    </Typography>
+                                    <Box
+                                      key={idx}
+                                      display="flex"
+                                      gap={0.5}
+                                      alignItems="center"
+                                    >
+                                      <CommentIcon fontSize="inherit" />
+                                      <Typography variant="body2">
+                                        {c.text}
+                                      </Typography>
+                                    </Box>
                                   ))}
                                 </Box>
 
@@ -431,7 +519,7 @@ const BoardPage: React.FC = () => {
                                   </>
                                 )}
                               </Box>
-                            )}
+                            </Collapse>
                           </Box>
                         )}
                       </Draggable>
@@ -591,7 +679,7 @@ const BoardPage: React.FC = () => {
           open={logOpen}
           onClose={() => setLogOpen(false)}
           fullWidth
-          maxWidth="md"
+          maxWidth="sm"
         >
           <DialogTitle>
             Activity Logs

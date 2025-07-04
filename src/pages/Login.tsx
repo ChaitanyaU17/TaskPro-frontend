@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
 // const baseUrl = import.meta.env.VITE_API_BASE_URL";
 
@@ -42,10 +43,12 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (values: LoginValues) => {
     const result = await dispatch(loginThunk(values));
     if (loginThunk.fulfilled.match(result)) {
-      const role = result.payload.role; 
+      const role = result.payload.role;
       if (role === "Admin") {
+        toast.success("Login Successfull");
         navigate("/admin");
       } else {
+        toast.success("Login Successfull");
         navigate("/dashboard");
       }
     } else {
@@ -55,8 +58,19 @@ const LoginPage: React.FC = () => {
   };
 
   return (
+    <Box>
+    <Box display="flex" justifyContent="flex-start" p={2}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate("/")}
+        >
+          <ArrowBackIosIcon fontSize="small" />
+          Home
+        </Button>
+      </Box>
     <Container maxWidth="sm">
-      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
+      <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
         <Box textAlign="center">
           <Box
             display="flex"
@@ -144,6 +158,7 @@ const LoginPage: React.FC = () => {
         </Formik>
       </Paper>
     </Container>
+    </Box>
   );
 };
 
