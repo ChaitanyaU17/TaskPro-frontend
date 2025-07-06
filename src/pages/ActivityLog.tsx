@@ -4,12 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchActivityLogs } from "../features/slices/activitySlice";
 import type { RootState, AppDispatch } from "../features/store/store";
 import {
-  Box,
   Typography,
   CircularProgress,
   List,
   ListItem,
   ListItemText,
+  Container,
 } from "@mui/material";
 import moment from "moment";
 
@@ -30,7 +30,7 @@ const ActivityLog: React.FC<Props> = ({ projectId }) => {
   }, [dispatch, projectId]);
 
   return (
-    <Box >
+    <Container >
       {loading && <CircularProgress size={24} />}
       {error && <Typography color="error">{error}</Typography>}
 
@@ -44,7 +44,7 @@ const ActivityLog: React.FC<Props> = ({ projectId }) => {
           </ListItem>
         ))}
       </List>
-    </Box>
+    </Container>
   );
 };
 
