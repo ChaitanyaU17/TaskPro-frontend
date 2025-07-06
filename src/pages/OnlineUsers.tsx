@@ -22,7 +22,7 @@ const OnlineUsers: React.FC = () => {
     connectAndEmit();
 
     socket.on("online-users", (users: { userId: string; email: string }[]) => {
-      console.log("Received online users:", users);
+      // console.log("Received online users:", users);
       setOnlineUsers(users);
     });
 

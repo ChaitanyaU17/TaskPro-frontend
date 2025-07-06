@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <Box>
+    <>
     <Box display="flex" justifyContent="flex-start" p={2}>
         <Button
           variant="contained"
@@ -158,7 +158,7 @@ const LoginPage: React.FC = () => {
         </Formik>
       </Paper>
     </Container>
-    </Box>
+    </>
   );
 };
 

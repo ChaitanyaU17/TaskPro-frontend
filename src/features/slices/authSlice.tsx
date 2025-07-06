@@ -1,4 +1,3 @@
-// src/features/auth/authSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
@@ -39,7 +38,7 @@ export const loginThunk = createAsyncThunk(
       Cookies.set("userId", userId, { expires: 1 });
       Cookies.set("email", email, { expires: 1 });
 
-      console.log("Logged in User ID:", userId);
+      // console.log("Logged in User ID:", userId);
 
       return { token, role, userId, email };
     } catch (err) {
