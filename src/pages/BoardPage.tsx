@@ -51,6 +51,8 @@ const BoardPage: React.FC = () => {
   const projectId = id as string;
   const dispatch = useDispatch<AppDispatch>();
   const { tasks, loading } = useSelector((state: RootState) => state.task);
+  const userId = useSelector((state: RootState) => state.auth.userId);
+  const currentUserEmail = useSelector((state: RootState) => state.auth.email);
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -318,13 +320,17 @@ const BoardPage: React.FC = () => {
                                 {task.title}
                               </Typography>
                               <Box display="flex" gap={1}>
-                                <Button
-                                  size="small"
-                                  onClick={() => openTaskModal(task)}
-                                  sx={{ minWidth: "unset", p: "4px" }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </Button>
+                                {(role === "Admin" ||
+                                  task.creator === userId) && (
+                                  <Button
+                                    size="small"
+                                    onClick={() => openTaskModal(task)}
+                                    sx={{ minWidth: "unset", p: "4px" }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </Button>
+                                )}
+
                                 {role === "Admin" && (
                                   <Button
                                     size="small"
@@ -475,23 +481,33 @@ const BoardPage: React.FC = () => {
                             <Collapse in={commentModalTask?._id === task._id}>
                               <Box mt={1}>
                                 <Box mb={1}>
-                                  {task.comments?.map((c, idx) => (
-                                    <Box
-                                      key={idx}
-                                      display="flex"
-                                      gap={0.5}
-                                      alignItems="center"
+                                  {task.comments?.length === 0 ? (
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
                                     >
-                                      <CommentIcon fontSize="inherit" />
-                                      <Typography variant="body2">
-                                        {c.text}
-                                      </Typography>
-                                    </Box>
-                                  ))}
+                                      <i>no comments</i>
+                                    </Typography>
+                                  ) : (
+                                    task.comments?.map((c, idx) => (
+                                      <Box
+                                        key={idx}
+                                        display="flex"
+                                        gap={0.5}
+                                        alignItems="center"
+                                      >
+                                        <CommentIcon fontSize="inherit" />
+                                        <Typography variant="body2">
+                                          {c.text}
+                                        </Typography>
+                                      </Box>
+                                    ))
+                                  )}
                                 </Box>
 
-                                {/* Show input only if user is Admin */}
-                                {role === "Admin" && (
+                                {/* Show input only if user is Admin and User should only comment if they are assignee*/}
+                                {(role === "Admin" ||
+                                  task.assigneeEmail === currentUserEmail) && (
                                   <>
                                     <TextField
                                       size="small"
@@ -681,7 +697,13 @@ const BoardPage: React.FC = () => {
           fullWidth
           maxWidth="sm"
         >
-          <DialogTitle>
+          <DialogTitle sx={{
+              flex: 1,
+              background:
+                "linear-gradient(135deg,rgb(215, 237, 247) 20%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
+              backgroundRepeat: "no-repeat",
+              backgroundAttachment: "fixed",
+            }}>
             Activity Logs
             <IconButton
               aria-label="close"
@@ -691,7 +713,17 @@ const BoardPage: React.FC = () => {
               <CloseIcon />
             </IconButton>
           </DialogTitle>
-          <DialogContent dividers>
+          <DialogContent
+            dividers
+            sx={{
+              flex: 1,
+              minHeight: "400px",
+              background:
+                "linear-gradient(135deg,rgb(215, 237, 247) 20%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
+              backgroundRepeat: "no-repeat",
+              backgroundAttachment: "fixed",
+            }}
+          >
             <ActivityLog projectId={projectId} />
           </DialogContent>
         </Dialog>

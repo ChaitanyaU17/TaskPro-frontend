@@ -20,6 +20,7 @@ export interface Task {
   deadline?: string;
   priority?: "Low" | "Medium" | "High";
   tags?: string[];
+  creator: string;
 }
 
 interface TaskState {
