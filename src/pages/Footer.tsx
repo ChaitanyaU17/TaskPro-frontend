@@ -20,7 +20,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 
 const Footer: React.FC = () => {
   return (
-    <Box sx={{ bgcolor: "#5a53b5", color: "#fff", px: 4, pt: 6, pb: 3 }}>
+    <Box sx={{ bgcolor: "primary.main", color: "#fff", px: 4, pt: 6, pb: 3 }}>
       <Grid container spacing={4}>
         <Grid item xs={12} md={2}>
           <Box sx={{ mb: 2 }}>
@@ -72,7 +72,7 @@ const Footer: React.FC = () => {
       </Grid>
 
       {/* Divider */}
-      <Divider sx={{ my: 4, bgcolor: "#fff", opacity: 0.2 }} />
+      <Divider sx={{ my: 4, bgcolor: "#fff", opacity: 0.8 }} />
 
       {/* Bottom Row */}
       <Grid container alignItems="center" justifyContent="space-between">

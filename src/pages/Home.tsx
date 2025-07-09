@@ -97,7 +97,7 @@ const Home: React.FC = () => {
                   variant="outlined"
                   size="medium"
                 />
-                <Button variant="contained" size="large">
+                <Button variant="contained" size="large" component={RouterLink} to="/signup">
                   Sign Up Free
                 </Button>
               </Box>

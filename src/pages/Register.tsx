@@ -23,21 +23,18 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 interface RegisterValues {
   email: string;
   password: string;
-  role: "Admin" | "User";
+  role: "Admin";
 }
 
 const initialValues: RegisterValues = {
   email: "",
   password: "",
-  role: "" as "Admin" | "User",
+  role: "Admin",
 };
 
 const validationSchema = Yup.object({
   email: Yup.string().email("Invalid email").required("Required"),
   password: Yup.string().min(6, "At least 6 characters").required("Required"),
-  role: Yup.string()
-    .oneOf(["Admin", "User"], "Select a valid role")
-    .required("Role is required"),
 });
 
 const Register: React.FC = () => {
@@ -45,10 +42,7 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (values: RegisterValues) => {
     try {
-      const res = await axios.post(
-        `${baseUrl}/auth/signup`,
-        values
-      );
+      const res = await axios.post(`${baseUrl}/auth/signup`, values);
       toast.success("Registration Successfull");
       console.log("Register success:", res.data);
       navigate("/login"); 
@@ -62,19 +56,19 @@ const Register: React.FC = () => {
     }
   };
 
-  return (
+   return (
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Box textAlign="center">
           <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
             <AssignmentIcon color="primary" sx={{ mr: 1 }} />
-            <Typography variant="h4" sx={{ fontWeight: "bold" }} color="primary">
+            <Typography variant="h4" fontWeight="bold" color="primary">
               TaskPro
             </Typography>
           </Box>
 
           <Typography variant="h5" gutterBottom fontWeight="bold">
-            Register
+            Admin Registration
           </Typography>
         </Box>
 
@@ -83,7 +77,7 @@ const Register: React.FC = () => {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ errors, touched, isSubmitting, values, setFieldValue }) => (
+          {({ errors, touched, isSubmitting }) => (
             <Form>
               <Box mb={2}>
                 <Field
@@ -107,30 +101,6 @@ const Register: React.FC = () => {
                 />
               </Box>
 
-              <Box mb={2}>
-                <FormControl fullWidth>
-                  <InputLabel id="role-label">Role</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    name="role"
-                    label="Role"
-                    value={values.role}
-                    onChange={(e) =>
-                      setFieldValue("role", e.target.value as "Admin" | "User")
-                    }
-                    error={touched.role && Boolean(errors.role)}
-                  >
-                    <MenuItem value="Admin">Admin</MenuItem>
-                    <MenuItem value="User">User</MenuItem>
-                  </Select>
-                  {touched.role && errors.role && (
-                    <Typography variant="caption" color="error">
-                      {errors.role}
-                    </Typography>
-                  )}
-                </FormControl>
-              </Box>
-
               <Button
                 variant="contained"
                 color="primary"
@@ -138,7 +108,7 @@ const Register: React.FC = () => {
                 disabled={isSubmitting}
                 fullWidth
               >
-                Register
+                Register as Admin
               </Button>
 
               <Box textAlign="center" mt={2}>

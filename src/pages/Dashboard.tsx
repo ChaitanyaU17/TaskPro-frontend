@@ -20,7 +20,6 @@ import {
 import Grid from "@mui/material/Grid";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-
 import { fetchProjects, createProject } from "../features/slices/projectSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -109,8 +108,8 @@ const Dashboard: React.FC = () => {
 
       {/* Project Cards */}
       {loading ? (
-        <Box display="flex" justifyContent="center" mt={5}>
-          <CircularProgress />
+        <Box display="flex" justifyContent="center" mt={10}>
+          <CircularProgress size={54} />
         </Box>
       ) : projects.length === 0 ? (
         <Typography color="text.secondary">
