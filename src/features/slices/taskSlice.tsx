@@ -37,10 +37,32 @@ const initialState: TaskState = {
 
 export const fetchTasks = createAsyncThunk(
   "task/fetchTasks",
-  async (projectId: string, { getState, rejectWithValue }) => {
+  async (
+    {
+      projectId,
+      title,
+      tag,
+      assignee,
+      priority,
+    }: {
+      projectId: string;
+      title?: string;
+      tag?: string;
+      assignee?: string;
+      priority?: string;
+    },
+    { getState, rejectWithValue }
+  ) => {
     const token = (getState() as RootState).auth.token;
+
+    const params = new URLSearchParams();
+    params.append('project', projectId);
+    if (title) params.append('title', title);
+    if (tag) params.append('tag', tag);
+    if (assignee) params.append('assignee', assignee);
+    if (priority) params.append('priority', priority);
     try {
-      const res = await axios.get(`${baseUrl}/task?project=${projectId}`, {
+      const res = await axios.get(`${baseUrl}/task?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       console.log("Fetched tasks:", res.data);
@@ -112,7 +134,6 @@ export const createTask = createAsyncThunk(
   }
 );
 
-
 // Async thunk to update a task
 export const editTask = createAsyncThunk(
   "task/editTask",
@@ -171,7 +192,7 @@ export const fetchComments = createAsyncThunk(
       });
       return { taskId, comments: res.data };
     } catch (err) {
-       console.error("Error fetching comments:", err);
+      console.error("Error fetching comments:", err);
       return rejectWithValue("Failed to fetch comments");
     }
   }

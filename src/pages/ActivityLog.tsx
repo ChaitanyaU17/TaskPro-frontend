@@ -10,6 +10,7 @@ import {
   ListItem,
   ListItemText,
   Container,
+  Box,
 } from "@mui/material";
 import moment from "moment";
 
@@ -30,20 +31,25 @@ const ActivityLog: React.FC<Props> = ({ projectId }) => {
   }, [dispatch, projectId]);
 
   return (
-    <Container >
-      {loading && <CircularProgress size={24} />}
-      {error && <Typography color="error">{error}</Typography>}
+    <Container>
+      {loading ? (
+        <Box display="flex" justifyContent="center" pt={15}>
+          <CircularProgress size={44} />
+        </Box>
+      ) : (
+        <List>
+          {logs.map((log) => (
+            <ListItem key={log._id}>
+              <ListItemText
+                primary={`(${log.user.role}) - ${log.user.email} - ${log.action}`}
+                secondary={moment(log.createdAt).fromNow()}
+              />
+            </ListItem>
+          ))}
+        </List>
+      )}
 
-      <List>
-        {logs.map((log) => (
-          <ListItem key={log._id}>
-            <ListItemText
-              primary={`(${log.user.role}) - ${log.user.email} - ${log.action}`}
-              secondary={moment(log.createdAt).fromNow()}
-            />
-          </ListItem>
-        ))}
-      </List>
+      {error && <Typography color="error">{error}</Typography>}
     </Container>
   );
 };
