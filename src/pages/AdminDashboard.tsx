@@ -135,7 +135,7 @@ const AdminDashboard: React.FC = () => {
             onClick={() => navigate("/dashboard")}
             sx={{ mb: 2 }}
           >
-            Create Project
+            Projects
           </Button>
           <Button
             variant="outlined"
@@ -165,7 +165,7 @@ const AdminDashboard: React.FC = () => {
                     mr: 1.5,
                   }}
                 />
-                <Typography>Users: {stats.users}</Typography>
+                <Typography>Users: {users.filter(user => user.role !== 'Admin').length}</Typography>
               </Box>
 
               <Box display="flex" alignItems="center" mb={1}>

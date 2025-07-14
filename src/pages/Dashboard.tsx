@@ -113,23 +113,28 @@ const Dashboard: React.FC = () => {
         </Box>
       ) : projects.length === 0 ? (
         <Typography color="text.secondary">
-          No projects found. Start by creating one.
+          {role === "Admin"
+            ? "No projects found. Start by creating one."
+            : "No projects assigned to you yet. Please wait for an admin to create one."}
         </Typography>
       ) : (
         <Grid container spacing={3}>
           {projects.map((project) => (
-            <Grid item xs={12} sm={6} md={4} key={project._id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={project._id}>
               <Card
                 elevation={3}
                 sx={{
                   transition: "0.3s",
                   borderRadius: 3,
-                  "&:hover": { boxShadow: 4, transform: "translateY(-4px)", background:
-                    "linear-gradient(135deg,rgb(226, 242, 250) 10%,rgb(238, 231, 248) 40%,rgb(254, 248, 248) 100%)",
-                  backgroundRepeat: "no-repeat",
-                  backgroundAttachment: "fixed", },
+                  "&:hover": {
+                    boxShadow: 4,
+                    transform: "translateY(-4px)",
+                    background:
+                      "linear-gradient(135deg,rgb(226, 242, 250) 10%,rgb(238, 231, 248) 40%,rgb(254, 248, 248) 100%)",
+                    backgroundRepeat: "no-repeat",
+                    backgroundAttachment: "fixed",
+                  },
                   cursor: "pointer",
-                  
                 }}
                 onClick={() => navigate(`/projects/${project._id}`)}
               >
