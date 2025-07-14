@@ -14,6 +14,7 @@ import {
   TextField,
   MenuItem,
   IconButton,
+  Autocomplete,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -82,6 +83,22 @@ const BoardPage: React.FC = () => {
   const [filterAssignee, setFilterAssignee] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
 
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableAssignees, setAvailableAssignees] = useState<string[]>([]);
+
+  useEffect(() => {
+    const tags = new Set<string>();
+    const assignees = new Set<string>();
+
+    tasks.forEach((task) => {
+      task.tags?.forEach((tag) => tags.add(tag));
+      if (task.assigneeEmail) assignees.add(task.assigneeEmail);
+    });
+
+    setAvailableTags(Array.from(tags));
+    setAvailableAssignees(Array.from(assignees));
+  }, [tasks]);
+
   const handleAddComment = async () => {
     if (commentModalTask && newComment.trim()) {
       const result = await dispatch(
@@ -135,11 +152,11 @@ const BoardPage: React.FC = () => {
     };
   }, [dispatch]);
 
-const debouncedFetchTasks = useMemo(() => {
-  return debounce((params: Parameters<typeof fetchTasks>[0]) => {
-    dispatch(fetchTasks(params));
-  }, 600);
-}, [dispatch]);
+  const debouncedFetchTasks = useMemo(() => {
+    return debounce((params: Parameters<typeof fetchTasks>[0]) => {
+      dispatch(fetchTasks(params));
+    }, 600);
+  }, [dispatch]);
 
   useEffect(() => {
     if (projectId) {
@@ -167,9 +184,10 @@ const debouncedFetchTasks = useMemo(() => {
     };
   }, [debouncedFetchTasks]);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!title.trim()) return;
-    dispatch(
+
+    const result = await dispatch(
       createTask({
         title,
         description,
@@ -181,6 +199,18 @@ const debouncedFetchTasks = useMemo(() => {
         tags,
       })
     );
+
+    if (createTask.fulfilled.match(result)) {
+      dispatch(
+        fetchTasks({
+          projectId,
+          title: searchTitle,
+          tag: filterTag,
+          assignee: filterAssignee,
+          priority: filterPriority,
+        })
+      );
+    }
     setOpen(false);
     setTitle("");
     setDescription("");
@@ -274,13 +304,15 @@ const debouncedFetchTasks = useMemo(() => {
         </Typography>
 
         <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpen(true)}
-          >
-            New Task
-          </Button>
+          {role === "Admin" && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpen(true)}
+            >
+              New Task
+            </Button>
+          )}
 
           <OnlineUsers />
 
@@ -309,18 +341,30 @@ const debouncedFetchTasks = useMemo(() => {
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
             />
-            <TextField
-              size="small"
-              label="Filter by Tag"
+            <Autocomplete
+              options={availableTags}
               value={filterTag}
-              onChange={(e) => setFilterTag(e.target.value)}
+              onChange={(_, value) => setFilterTag(value || "")}
+              renderInput={(params) => (
+                <TextField {...params} label="Filter by Tag" size="small" />
+              )}
+              sx={{ minWidth: 200 }}
             />
-            <TextField
-              size="small"
-              label="Filter by Assignee"
+
+            <Autocomplete
+              options={availableAssignees}
               value={filterAssignee}
-              onChange={(e) => setFilterAssignee(e.target.value)}
+              onChange={(_, value) => setFilterAssignee(value || "")}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Filter by Assignee"
+                  size="small"
+                />
+              )}
+              sx={{ minWidth: 200 }}
             />
+
             <TextField
               select
               size="small"
@@ -336,295 +380,306 @@ const debouncedFetchTasks = useMemo(() => {
             </TextField>
           </Box>
 
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Box display="flex" gap={2}>
-              {statuses.map((status) => (
-                <Droppable droppableId={status} key={status}>
-                  {(provided) => (
-                    <Paper
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      sx={{
-                        flex: 1,
-                        p: 2,
-                        minHeight: "400px",
-                        background:
-                          "linear-gradient(135deg,rgb(215, 237, 247) 10%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
-                        backgroundRepeat: "no-repeat",
-                        backgroundAttachment: "fixed",
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight="bold" mb={2}>
-                        {status}
-                      </Typography>
+          {Object.values(groupedTasks).flat().length === 0 ? (
+            <Typography mt={4} color="text.secondary" textAlign="center">
+              No tasks found for this project.
+              {role === "Admin"
+                ? " Start by creating a new task."
+                : " Please wait for an admin to assign tasks."}
+            </Typography>
+          ) : (
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Box display="flex" gap={2}>
+                {statuses.map((status) => (
+                  <Droppable droppableId={status} key={status}>
+                    {(provided) => (
+                      <Paper
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        sx={{
+                          flex: 1,
+                          p: 2,
+                          minHeight: "400px",
+                          background:
+                            "linear-gradient(135deg,rgb(215, 237, 247) 10%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
+                          backgroundRepeat: "no-repeat",
+                          backgroundAttachment: "fixed",
+                        }}
+                      >
+                        <Typography variant="h6" fontWeight="bold" mb={2}>
+                          {status}
+                        </Typography>
 
-                      {groupedTasks[status]?.map((task, index) => (
-                        <Draggable
-                          draggableId={task._id}
-                          index={index}
-                          key={task._id}
-                        >
-                          {(provided) => (
-                            <Box
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              sx={{
-                                p: 2,
-                                mb: 2,
-                                background:
-                                  "linear-gradient(135deg, #f0faff 10%, #f7f0ff 50%, #ffffff 100%)",
-
-                                backgroundRepeat: "no-repeat",
-                                backgroundAttachment: "fixed",
-                                borderRadius: 1,
-                                boxShadow: 1,
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 1,
-                              }}
-                            >
-                              {/* Task: Title */}
+                        {groupedTasks[status]?.map((task, index) => (
+                          <Draggable
+                            draggableId={task._id}
+                            index={index}
+                            key={task._id}
+                          >
+                            {(provided) => (
                               <Box
-                                display="flex"
-                                justifyContent="space-between"
-                                alignItems="center"
-                              >
-                                <Typography fontWeight="bold">
-                                  {task.title}
-                                </Typography>
-                                <Box display="flex" gap={1}>
-                                  {(role === "Admin" ||
-                                    task.creator === userId) && (
-                                    <Button
-                                      size="small"
-                                      onClick={() => openTaskModal(task)}
-                                      sx={{ minWidth: "unset", p: "4px" }}
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </Button>
-                                  )}
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                sx={{
+                                  p: 2,
+                                  mb: 2,
+                                  background:
+                                    "linear-gradient(135deg, #f0faff 10%, #f7f0ff 50%, #ffffff 100%)",
 
-                                  {role === "Admin" && (
+                                  backgroundRepeat: "no-repeat",
+                                  backgroundAttachment: "fixed",
+                                  borderRadius: 1,
+                                  boxShadow: 1,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 1,
+                                }}
+                              >
+                                {/* Task: Title */}
+                                <Box
+                                  display="flex"
+                                  justifyContent="space-between"
+                                  alignItems="center"
+                                >
+                                  <Typography fontWeight="bold">
+                                    {task.title}
+                                  </Typography>
+                                  <Box display="flex" gap={1}>
+                                    {(role === "Admin" ||
+                                      task.creator === userId) && (
+                                      <Button
+                                        size="small"
+                                        onClick={() => openTaskModal(task)}
+                                        sx={{ minWidth: "unset", p: "4px" }}
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </Button>
+                                    )}
+
+                                    {role === "Admin" && (
+                                      <Button
+                                        size="small"
+                                        color="error"
+                                        onClick={() =>
+                                          dispatch(deleteTask(task._id))
+                                        }
+                                        sx={{ minWidth: "unset", p: "4px" }}
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </Button>
+                                    )}
+
                                     <Button
                                       size="small"
-                                      color="error"
                                       onClick={() =>
-                                        dispatch(deleteTask(task._id))
+                                        setCommentModalTask(
+                                          commentModalTask?._id === task._id
+                                            ? null
+                                            : task
+                                        )
                                       }
-                                      sx={{ minWidth: "unset", p: "4px" }}
-                                    >
-                                      <DeleteIcon fontSize="small" />
-                                    </Button>
-                                  )}
-
-                                  <Button
-                                    size="small"
-                                    onClick={() =>
-                                      setCommentModalTask(
-                                        commentModalTask?._id === task._id
-                                          ? null
-                                          : task
-                                      )
-                                    }
-                                    sx={{
-                                      minWidth: "unset",
-                                      p: "4px",
-                                      color: "gray",
-                                    }}
-                                  >
-                                    <ChatBubbleOutlineIcon fontSize="small" />
-                                    <Typography
-                                      variant="caption"
-                                      fontSize={12}
-                                      p={0.5}
-                                    >
-                                      {task.comments?.length || ""}
-                                    </Typography>
-                                  </Button>
-                                </Box>
-                              </Box>
-
-                              {/* Description */}
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {task.description || "No description"}
-                              </Typography>
-
-                              {/* Assignee Email */}
-                              <Box display="flex" flexWrap="wrap" gap={0.5}>
-                                {task.assigneeEmail ? (
-                                  <Box
-                                    display="flex"
-                                    gap={0.5}
-                                    alignItems="center"
-                                  >
-                                    <PersonIcon fontSize="inherit" />
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
-                                    >
-                                      {task.assigneeEmail}
-                                    </Typography>
-                                  </Box>
-                                ) : null}
-
-                                {/* Deadline */}
-
-                                {task.deadline && (
-                                  <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    gap={0.5}
-                                  >
-                                    <AccessTimeIcon
-                                      fontSize="inherit"
                                       sx={{
-                                        color: dayjs(task.deadline).isBefore(
-                                          dayjs(),
-                                          "day"
-                                        )
-                                          ? "error.main"
-                                          : "text.secondary",
+                                        minWidth: "unset",
+                                        p: "4px",
+                                        color: "gray",
                                       }}
-                                    />
-                                    <Typography
-                                      variant="caption"
-                                      color={
-                                        task.deadline &&
-                                        dayjs(task.deadline).isBefore(
-                                          dayjs(),
-                                          "day"
-                                        )
-                                          ? "error"
-                                          : "textSecondary"
-                                      }
                                     >
-                                      {new Date(
-                                        task.deadline
-                                      ).toLocaleDateString("en-IN", {
-                                        year: "numeric",
-                                        month: "short",
-                                        day: "numeric",
-                                      })}
-                                    </Typography>
+                                      <ChatBubbleOutlineIcon fontSize="small" />
+                                      <Typography
+                                        variant="caption"
+                                        fontSize={12}
+                                        p={0.5}
+                                      >
+                                        {task.comments?.length || ""}
+                                      </Typography>
+                                    </Button>
                                   </Box>
-                                )}
+                                </Box>
 
-                                {/* Priority */}
-                                {task.priority && (
-                                  <Box
-                                    display="flex"
-                                    alignItems="center"
-                                    gap={0.5}
-                                  >
-                                    <SignalCellularAltIcon fontSize="inherit" />
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
+                                {/* Description */}
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  {task.description || "No description"}
+                                </Typography>
+
+                                {/* Assignee Email */}
+                                <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                  {task.assigneeEmail ? (
+                                    <Box
+                                      display="flex"
+                                      gap={0.5}
+                                      alignItems="center"
                                     >
-                                      Priority: {task.priority}
-                                    </Typography>
-                                  </Box>
-                                )}
-                              </Box>
+                                      <PersonIcon fontSize="inherit" />
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        {task.assigneeEmail}
+                                      </Typography>
+                                    </Box>
+                                  ) : null}
 
-                              {/* Tags */}
-                              {task.tags && task.tags.length > 0 && (
-                                <Box display="flex" gap={0.5} flexWrap="wrap">
-                                  {task.tags.map((tag, i) => (
+                                  {/* Deadline */}
+
+                                  {task.deadline && (
                                     <Box
                                       display="flex"
                                       alignItems="center"
-                                      key={i}
-                                      px={1}
-                                      py={0.25}
-                                      bgcolor="grey.100"
-                                      borderRadius="8px"
+                                      gap={0.5}
                                     >
-                                      <TurnedInNotIcon fontSize="inherit" />
-                                      <Typography variant="caption">
-                                        {tag}
+                                      <AccessTimeIcon
+                                        fontSize="inherit"
+                                        sx={{
+                                          color: dayjs(task.deadline).isBefore(
+                                            dayjs(),
+                                            "day"
+                                          )
+                                            ? "error.main"
+                                            : "text.secondary",
+                                        }}
+                                      />
+                                      <Typography
+                                        variant="caption"
+                                        color={
+                                          task.deadline &&
+                                          dayjs(task.deadline).isBefore(
+                                            dayjs(),
+                                            "day"
+                                          )
+                                            ? "error"
+                                            : "textSecondary"
+                                        }
+                                      >
+                                        {new Date(
+                                          task.deadline
+                                        ).toLocaleDateString("en-IN", {
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
                                       </Typography>
                                     </Box>
-                                  ))}
-                                </Box>
-                              )}
+                                  )}
 
-                              {/* Comments */}
-                              <Collapse in={commentModalTask?._id === task._id}>
-                                <Box mt={1}>
-                                  <Box mb={1}>
-                                    {task.comments?.length === 0 ? (
+                                  {/* Priority */}
+                                  {task.priority && (
+                                    <Box
+                                      display="flex"
+                                      alignItems="center"
+                                      gap={0.5}
+                                    >
+                                      <SignalCellularAltIcon fontSize="inherit" />
                                       <Typography
-                                        variant="body2"
+                                        variant="caption"
                                         color="text.secondary"
                                       >
-                                        <i>no comments</i>
+                                        Priority: {task.priority}
                                       </Typography>
-                                    ) : (
-                                      task.comments?.map((c, idx) => (
-                                        <Box
-                                          key={idx}
-                                          display="flex"
-                                          gap={0.5}
-                                          alignItems="center"
-                                        >
-                                          <CommentIcon fontSize="inherit" />
-                                          <Typography variant="body2">
-                                            {c.text}
-                                          </Typography>
-                                        </Box>
-                                      ))
-                                    )}
-                                  </Box>
-
-                                  {/* Show input only if user is Admin and User should only comment if they are assignee*/}
-                                  {(role === "Admin" ||
-                                    task.assigneeEmail ===
-                                      currentUserEmail) && (
-                                    <>
-                                      <TextField
-                                        size="small"
-                                        placeholder="Add a comment..."
-                                        fullWidth
-                                        value={newComment}
-                                        onChange={(e) =>
-                                          setNewComment(e.target.value)
-                                        }
-                                      />
-                                      <Box
-                                        mt={1}
-                                        display="flex"
-                                        justifyContent="flex-end"
-                                      >
-                                        <Button
-                                          variant="contained"
-                                          size="small"
-                                          onClick={handleAddComment}
-                                          disabled={!newComment.trim()}
-                                        >
-                                          Add
-                                        </Button>
-                                      </Box>
-                                    </>
+                                    </Box>
                                   )}
                                 </Box>
-                              </Collapse>
-                            </Box>
-                          )}
-                        </Draggable>
-                      ))}
 
-                      {provided.placeholder}
-                    </Paper>
-                  )}
-                </Droppable>
-              ))}
-            </Box>
-          </DragDropContext>
+                                {/* Tags */}
+                                {task.tags && task.tags.length > 0 && (
+                                  <Box display="flex" gap={0.5} flexWrap="wrap">
+                                    {task.tags.map((tag, i) => (
+                                      <Box
+                                        display="flex"
+                                        alignItems="center"
+                                        key={i}
+                                        px={1}
+                                        py={0.25}
+                                        bgcolor="grey.100"
+                                        borderRadius="8px"
+                                      >
+                                        <TurnedInNotIcon fontSize="inherit" />
+                                        <Typography variant="caption">
+                                          {tag}
+                                        </Typography>
+                                      </Box>
+                                    ))}
+                                  </Box>
+                                )}
+
+                                {/* Comments */}
+                                <Collapse
+                                  in={commentModalTask?._id === task._id}
+                                >
+                                  <Box mt={1}>
+                                    <Box mb={1}>
+                                      {task.comments?.length === 0 ? (
+                                        <Typography
+                                          variant="body2"
+                                          color="text.secondary"
+                                        >
+                                          <i>no comments</i>
+                                        </Typography>
+                                      ) : (
+                                        task.comments?.map((c, idx) => (
+                                          <Box
+                                            key={idx}
+                                            display="flex"
+                                            gap={0.5}
+                                            alignItems="center"
+                                          >
+                                            <CommentIcon fontSize="inherit" />
+                                            <Typography variant="body2">
+                                              {c.text}
+                                            </Typography>
+                                          </Box>
+                                        ))
+                                      )}
+                                    </Box>
+
+                                    {/* Show input only if user is Admin and User should only comment if they are assignee*/}
+                                    {(role === "Admin" ||
+                                      task.assigneeEmail ===
+                                        currentUserEmail) && (
+                                      <>
+                                        <TextField
+                                          size="small"
+                                          placeholder="Add a comment..."
+                                          fullWidth
+                                          value={newComment}
+                                          onChange={(e) =>
+                                            setNewComment(e.target.value)
+                                          }
+                                        />
+                                        <Box
+                                          mt={1}
+                                          display="flex"
+                                          justifyContent="flex-end"
+                                        >
+                                          <Button
+                                            variant="contained"
+                                            size="small"
+                                            onClick={handleAddComment}
+                                            disabled={!newComment.trim()}
+                                          >
+                                            Add
+                                          </Button>
+                                        </Box>
+                                      </>
+                                    )}
+                                  </Box>
+                                </Collapse>
+                              </Box>
+                            )}
+                          </Draggable>
+                        ))}
+
+                        {provided.placeholder}
+                      </Paper>
+                    )}
+                  </Droppable>
+                ))}
+              </Box>
+            </DragDropContext>
+          )}
         </>
       )}
 

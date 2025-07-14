@@ -56,16 +56,16 @@ export const fetchTasks = createAsyncThunk(
     const token = (getState() as RootState).auth.token;
 
     const params = new URLSearchParams();
-    params.append('project', projectId);
-    if (title) params.append('title', title);
-    if (tag) params.append('tag', tag);
-    if (assignee) params.append('assignee', assignee);
-    if (priority) params.append('priority', priority);
+    params.append("project", projectId);
+    if (title) params.append("title", title);
+    if (tag) params.append("tag", tag);
+    if (assignee) params.append("assignee", assignee);
+    if (priority) params.append("priority", priority);
     try {
       const res = await axios.get(`${baseUrl}/task?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Fetched tasks:", res.data);
+      // console.log("Fetched tasks:", res.data);
       return res.data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -77,6 +77,17 @@ export const fetchTasks = createAsyncThunk(
     }
   }
 );
+
+type NewTaskData = {
+  title: string;
+  description?: string;
+  status: string;
+  project: string;
+  deadline?: string;
+  priority?: "Low" | "Medium" | "High";
+  tags?: string[];
+  assignee?: string;
+};
 
 // create task
 export const createTask = createAsyncThunk(
@@ -103,25 +114,28 @@ export const createTask = createAsyncThunk(
     },
     { getState, rejectWithValue }
   ) => {
-    const token = (getState() as RootState).auth.token;
-    try {
-      const res = await axios.post(
-        `${baseUrl}/task`,
-        {
-          title,
-          description,
-          status,
-          project,
-          assignee,
-          deadline,
-          priority,
-          tags: tags ? tags.split(",").map((t) => t.trim()) : [],
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+    const state = getState() as RootState;
+    const token = state.auth.token;
+    const role = state.auth.role;
 
+    const taskData: NewTaskData = {
+      title,
+      description,
+      status,
+      project,
+      deadline,
+      priority,
+      tags: tags ? tags.split(",").map((t) => t.trim()) : [],
+    };
+
+    if (role === "Admin" && assignee?.trim()) {
+      taskData.assignee = assignee;
+    }
+
+    try {
+      const res = await axios.post(`${baseUrl}/task`, taskData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       return res.data;
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -134,7 +148,7 @@ export const createTask = createAsyncThunk(
   }
 );
 
-// Async thunk to update a task
+// update a task
 export const editTask = createAsyncThunk(
   "task/editTask",
   async (
@@ -245,13 +259,20 @@ const taskSlice = createSlice({
       })
       .addCase(editTask.fulfilled, (state, action: PayloadAction<Task>) => {
         state.loading = false;
-        const index = state.tasks.findIndex(
-          (t) => t._id === action.payload._id
-        );
+        const updatedTask = action.payload;
+        const index = state.tasks.findIndex((t) => t._id === updatedTask._id);
+
         if (index !== -1) {
-          state.tasks[index] = action.payload;
+          state.tasks[index] = {
+            ...state.tasks[index],
+            ...updatedTask,
+            comments: state.tasks[index].comments || [], 
+            assigneeEmail:
+              updatedTask.assigneeEmail || state.tasks[index].assigneeEmail, // 
+          };
         }
       })
+
       .addCase(editTask.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
