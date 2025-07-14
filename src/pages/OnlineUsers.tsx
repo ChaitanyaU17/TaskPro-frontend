@@ -7,6 +7,7 @@ import socket, { socketConnectPromise } from "../socket";
 const OnlineUsers: React.FC = () => {
   const userId = useSelector((state: RootState) => state.auth.userId);
   const userEmail = useSelector((state: RootState) => state.auth.email);
+
   const [onlineUsers, setOnlineUsers] = useState<
     { userId: string; email: string }[]
   >([]);
@@ -14,7 +15,12 @@ const OnlineUsers: React.FC = () => {
   useEffect(() => {
     const connectAndEmit = async () => {
       await socketConnectPromise;
-      if (userId && userEmail) {
+      if (
+        userId &&
+        userId !== "undefined" &&
+        userEmail &&
+        userEmail !== "undefined"
+      ) {
         socket.emit("user-online", { userId, email: userEmail });
       }
     };
@@ -22,8 +28,14 @@ const OnlineUsers: React.FC = () => {
     connectAndEmit();
 
     socket.on("online-users", (users: { userId: string; email: string }[]) => {
-      // console.log("Received online users:", users);
-      setOnlineUsers(users);
+      const filtered = users.filter(
+        (u) =>
+          u.userId &&
+          u.userId !== "undefined" &&
+          u.email &&
+          u.email !== "undefined"
+      );
+      setOnlineUsers(filtered);
     });
 
     return () => {
@@ -32,15 +44,14 @@ const OnlineUsers: React.FC = () => {
   }, [userId, userEmail]);
 
   return (
-     <Box display="flex" alignItems="center" >
+    <Box display="flex" alignItems="center">
       <Box display="flex" alignItems="center" gap={1}>
-
         <Box
           sx={{
             width: 10,
             height: 10,
             borderRadius: "50%",
-            bgcolor: "success.main",  
+            bgcolor: "success.main",
           }}
         />
 
@@ -48,7 +59,7 @@ const OnlineUsers: React.FC = () => {
           variant="subtitle2"
           fontSize={15}
           fontWeight={600}
-          color="success.main" 
+          color="success.main"
         >
           Online
         </Typography>
@@ -65,7 +76,7 @@ const OnlineUsers: React.FC = () => {
               key={user.userId}
               label={user.email === userEmail ? "You" : user.email}
               color={user.email === userEmail ? "primary" : "success"}
-              size="small" 
+              size="small"
             />
           ))
         )}

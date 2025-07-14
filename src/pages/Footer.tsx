@@ -20,9 +20,9 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 
 const Footer: React.FC = () => {
   return (
-    <Box sx={{ bgcolor: "primary.main", color: "#fff", px: 4, pt: 6, pb: 3 }}>
+    <Box sx={{ bgcolor: "primary.dark", color: "#fff", px: 4, pt: 6, pb: 3 }}>
       <Grid container spacing={4}>
-        <Grid item xs={12} md={2}>
+        <Grid size={{ xs: 12, md: 2}}>
           <Box sx={{ mb: 2 }}>
             <Box display="flex" alignItems="center">
               {/* Logo */}
@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
           </Typography>
         </Grid>
 
-        <Grid item xs={6} md={2}>
+        <Grid size={{ xs: 6, md: 2}}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             About TaskPro
           </Typography>
@@ -51,7 +51,7 @@ const Footer: React.FC = () => {
           </Typography>
         </Grid>
 
-        <Grid item xs={6} md={2}>
+        <Grid size={{ xs: 6, md: 2}}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Apps
           </Typography>
@@ -61,7 +61,7 @@ const Footer: React.FC = () => {
         </Grid>
 
         {/* Contact */}
-        <Grid item xs={6} md={2}>
+        <Grid size={{ xs: 6, md: 2}}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Contact us
           </Typography>
@@ -76,7 +76,7 @@ const Footer: React.FC = () => {
 
       {/* Bottom Row */}
       <Grid container alignItems="center" justifyContent="space-between">
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 6, md: 2}}>
           <Stack
             direction="row"
             spacing={2}
@@ -94,7 +94,7 @@ const Footer: React.FC = () => {
           </Stack>
         </Grid>
 
-        <Grid item xs={12} md="auto">
+        <Grid size={{ xs: 12, md: "auto" }} >
           <Stack
             direction="row"
             spacing={2}
