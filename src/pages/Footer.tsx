@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
   return (
     <Box sx={{ bgcolor: "primary.dark", color: "#fff", px: 4, pt: 6, pb: 3 }}>
       <Grid container spacing={4}>
-        <Grid size={{ xs: 12, md: 2}}>
+        <Grid sx={{ gridColumn: { xs: "span 12", md: "span 3" } }}>
           <Box sx={{ mb: 2 }}>
             <Box display="flex" alignItems="center">
               {/* Logo */}
@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
           </Typography>
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2}}>
+        <Grid sx={{ gridColumn: {xs: "span 6", md: "span 3"}}}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             About TaskPro
           </Typography>
@@ -51,7 +51,7 @@ const Footer: React.FC = () => {
           </Typography>
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2}}>
+        <Grid sx={{ gridColumn: { xs: "span 6", md: "span 3" }}}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Apps
           </Typography>
@@ -61,7 +61,7 @@ const Footer: React.FC = () => {
         </Grid>
 
         {/* Contact */}
-        <Grid size={{ xs: 6, md: 2}}>
+        <Grid sx={{ gridColumn: {xs: "span 12", md: "span 3"}}}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Contact us
           </Typography>
@@ -75,8 +75,8 @@ const Footer: React.FC = () => {
       <Divider sx={{ my: 4, bgcolor: "#fff", opacity: 0.8 }} />
 
       {/* Bottom Row */}
-      <Grid container alignItems="center" justifyContent="space-between">
-        <Grid size={{ xs: 6, md: 2}}>
+      <Grid container alignItems="center" justifyContent="space-between" flexWrap="wrap">
+        <Grid sx={{gridColumn: {xs: "span 12", md: "span 6"}}}>
           <Stack
             direction="row"
             spacing={2}
@@ -85,7 +85,6 @@ const Footer: React.FC = () => {
           >
             <Language fontSize="small" />
             <Typography variant="body2">English</Typography>
-            {/* <ExpandMore fontSize="small" /> */}
             <Typography variant="body2" sx={{ ml: 2 }}>
               Privacy Policy
             </Typography>
@@ -94,7 +93,7 @@ const Footer: React.FC = () => {
           </Stack>
         </Grid>
 
-        <Grid size={{ xs: 12, md: "auto" }} >
+        <Grid size={{ xs: 12, md: "auto" }}>
           <Stack
             direction="row"
             spacing={2}
