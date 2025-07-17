@@ -3,6 +3,8 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
 import Cookies from "js-cookie";
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
+
 export interface AuthState {
   token: string | null;
   role: "Admin" | "User" | null;
@@ -27,7 +29,7 @@ export const loginThunk = createAsyncThunk(
   async (values: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${baseUrl}/auth/login`,
         values
       );
       const { token, role, userId, email } = res.data;

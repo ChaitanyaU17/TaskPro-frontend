@@ -55,6 +55,7 @@ const BoardPage: React.FC = () => {
   const { tasks, loading } = useSelector((state: RootState) => state.task);
   const userId = useSelector((state: RootState) => state.auth.userId);
   const currentUserEmail = useSelector((state: RootState) => state.auth.email);
+  const allUsers = useSelector((state: RootState) => state.adminUser.users);
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -316,15 +317,13 @@ const BoardPage: React.FC = () => {
 
           <OnlineUsers />
 
-          {role === "Admin" && (
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setLogOpen(true)}
-            >
-              View Activity Logs
-            </Button>
-          )}
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => setLogOpen(true)}
+          >
+            View Activity Logs
+          </Button>
         </Box>
       </Box>
 
@@ -722,12 +721,20 @@ const BoardPage: React.FC = () => {
               </MenuItem>
             ))}
           </TextField>
-          <TextField
-            label="Assignee Email"
-            fullWidth
-            margin="normal"
-            value={assignee}
-            onChange={(e) => setAssignee(e.target.value)}
+          <Autocomplete
+            size="small"
+            options={allUsers}
+            getOptionLabel={(user) => `${user.email} (${user.role})`}
+            value={allUsers.find((u) => u.email === assignee) || null}
+            onChange={(_, newValue) => setAssignee(newValue?.email || "")}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Assignee Email"
+                fullWidth
+                margin="normal"
+              />
+            )}
           />
 
           <TextField
@@ -823,47 +830,45 @@ const BoardPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {role === "Admin" && (
-        <Dialog
-          open={logOpen}
-          onClose={() => setLogOpen(false)}
-          fullWidth
-          maxWidth="sm"
+      <Dialog
+        open={logOpen}
+        onClose={() => setLogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle
+          sx={{
+            flex: 1,
+            background:
+              "linear-gradient(135deg,rgb(215, 237, 247) 20%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
+            backgroundRepeat: "no-repeat",
+            backgroundAttachment: "fixed",
+          }}
         >
-          <DialogTitle
-            sx={{
-              flex: 1,
-              background:
-                "linear-gradient(135deg,rgb(215, 237, 247) 20%,rgb(235, 221, 252) 40%,rgb(254, 248, 248) 100%)",
-              backgroundRepeat: "no-repeat",
-              backgroundAttachment: "fixed",
-            }}
+          Activity Logs
+          <IconButton
+            aria-label="close"
+            onClick={() => setLogOpen(false)}
+            sx={{ position: "absolute", right: 8, top: 8 }}
           >
-            Activity Logs
-            <IconButton
-              aria-label="close"
-              onClick={() => setLogOpen(false)}
-              sx={{ position: "absolute", right: 8, top: 8 }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent
-            dividers
-            sx={{
-              flex: 1,
-              minHeight: "400px",
-              background:
-                "linear-gradient(135deg, #f0faff 10%, #f7f0ff 50%, #ffffff 100%)",
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            flex: 1,
+            minHeight: "400px",
+            background:
+              "linear-gradient(135deg, #f0faff 10%, #f7f0ff 50%, #ffffff 100%)",
 
-              backgroundRepeat: "no-repeat",
-              backgroundAttachment: "fixed",
-            }}
-          >
-            <ActivityLog projectId={projectId} />
-          </DialogContent>
-        </Dialog>
-      )}
+            backgroundRepeat: "no-repeat",
+            backgroundAttachment: "fixed",
+          }}
+        >
+          <ActivityLog projectId={projectId} />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
