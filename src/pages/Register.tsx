@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Container,
   TextField,
@@ -6,17 +6,19 @@ import {
   Typography,
   Box,
   Paper,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
+  // MenuItem,
+  // Select,
+  // InputLabel,
+  // FormControl,
 } from "@mui/material";
-import { Formik, Form, Field } from "formik";
+import { Formik, Form, Field, type FieldInputProps } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import {toast} from 'react-toastify';
+import { toast } from "react-toastify";
+import { InputAdornment, IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -39,28 +41,34 @@ const validationSchema = Yup.object({
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (values: RegisterValues) => {
     try {
       const res = await axios.post(`${baseUrl}/auth/signup`, values);
       toast.success("Registration Successfull");
       console.log("Register success:", res.data);
-      navigate("/login"); 
+      navigate("/login");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data);
       } else {
-        toast.error('Something went wrong');
+        toast.error("Something went wrong");
         console.error("Unexpected error", error);
       }
     }
   };
 
-   return (
+  return (
     <Container maxWidth="sm">
       <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
         <Box textAlign="center">
-          <Box display="flex" justifyContent="center" alignItems="center" mb={1}>
+          <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            mb={1}
+          >
             <AssignmentIcon color="primary" sx={{ mr: 1 }} />
             <Typography variant="h4" fontWeight="bold" color="primary">
               TaskPro
@@ -90,15 +98,36 @@ const Register: React.FC = () => {
                 />
               </Box>
               <Box mb={2}>
-                <Field
-                  as={TextField}
-                  name="password"
-                  type="password"
-                  label="Password"
-                  fullWidth
-                  error={touched.password && Boolean(errors.password)}
-                  helperText={touched.password && errors.password}
-                />
+                <Field name="password">
+                  {({ field }: { field: FieldInputProps<string> }) => (
+                    <TextField
+                      {...field}
+                      type={showPassword ? "text" : "password"}
+                      label="Password"
+                      fullWidth
+                      error={touched.password && Boolean(errors.password)}
+                      helperText={touched.password && errors.password}
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                edge="end"
+                              >
+                                {showPassword ? (
+                                  <Visibility />
+                                ) : (
+                                  <VisibilityOff />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                  )}
+                </Field>
               </Box>
 
               <Button

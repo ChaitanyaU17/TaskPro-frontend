@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   TextField,
@@ -7,7 +7,7 @@ import {
   Box,
   Paper,
 } from "@mui/material";
-import { Formik, Form, Field } from "formik";
+import { Formik, Form, Field, type FieldInputProps } from "formik";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
 import { loginThunk } from "../features/slices/authSlice";
@@ -17,6 +17,8 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 // import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import { InputAdornment, IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 // const baseUrl = import.meta.env.VITE_API_BASE_URL";
 
@@ -40,6 +42,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const authState = useSelector((state: RootState) => state.auth);
   const { token, role } = useSelector((state: RootState) => state.auth);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -122,15 +125,38 @@ const LoginPage: React.FC = () => {
                   />
                 </Box>
                 <Box mb={2}>
-                  <Field
-                    as={TextField}
-                    name="password"
-                    type="password"
-                    label="Password"
-                    fullWidth
-                    error={touched.password && Boolean(errors.password)}
-                    helperText={touched.password && errors.password}
-                  />
+                  <Field name="password">
+                    {({ field }: { field: FieldInputProps<string> }) => (
+                      <TextField
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        label="Password"
+                        fullWidth
+                        error={touched.password && Boolean(errors.password)}
+                        helperText={touched.password && errors.password}
+                        slotProps={{
+                          input: {
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() =>
+                                    setShowPassword((prev) => !prev)
+                                  }
+                                  edge="end"
+                                >
+                                  {showPassword ? (
+                                    <Visibility />
+                                  ) : (
+                                    <VisibilityOff />
+                                  )}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    )}
+                  </Field>
                 </Box>
                 <Button
                   variant="contained"
